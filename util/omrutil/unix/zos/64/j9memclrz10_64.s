@@ -50,37 +50,19 @@ r15      EQU      15
          LTR      r0,r0
          LGR      r3,r1
          JE       @2L20
-* must be greater than 256 bytes
-* Check if Greater than 1024 bytes to clear
-         CHI      r0,3
-         JH       GT1024B
-         JL       LT768B
-         DC    X'E32032010036' Store PREFETCH NEXT LINE
-         DC    X'E32033010036' Store PREFETCH NEXT LINE
-         J        LE1024B
-* check if greater than 512 bytes
-LT768B   CHI      r0,2
-         JL       LE1024B
-         DC    X'E32032010036' Store PREFETCH NEXT LINE
-         J        LE1024B
-* Greater than 512 bytes to clear so subtract two from loop count
-GT1024B  AHI      r0,-3      
-@2L19    DS       0H                                  
+@2L19    DS       0H
 * z6 Limit of three concurrent cache line fetches
-         DC    X'E32032010036' Store PREFETCH NEXT LINE
-         DC    X'E32033010036' Store PREFETCH NEXT LINE
+         DC    X'E3A03FFF0036' Store PREFETCH  4K 
          XC       0(256,r3),0(r3)     
          LA       r3,256(,r3)
-         BRCT     r0,@2L19                            
-* add 2 back into loop count
-         AHI      r0,3
-LE1024B  XC       0(256,r3),0(r3)     
+         BRCT     r0,@2L19
+LE1024B  XC       0(256,r3),0(r3)
          LA       r3,256(,r3)
-         BRCT     r0,LE1024B                           
-@2L20    DS       0H                                  
-         LARL     r1,@2XC                           
+         BRCT     r0,LE1024B
+@2L20    DS       0H
+         LARL     r1,@2XC
          EX       r2,0(0,r1)
-@2L3     DS       0H                                  
+@2L3     DS       0H
          CELQEPLG      return
-@2XC     XC       0(0,r3),0(r3)     
+@2XC     XC       0(0,r3),0(r3)
          END
