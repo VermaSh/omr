@@ -1265,6 +1265,8 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"waitOnCompilationQueue",        "M\tPerform synchronous wait until compilation queue empty. Primarily for use with Compiler.command", SET_OPTION_BIT(TR_WaitBit), "F", NOT_IN_SUBSET},
    {"x86HLE",         "C\tEnable haswell hardware lock elision", SET_OPTION_BIT(TR_X86HLE), "F"},
    {"x86UseMFENCE",   "M\tEnable to use mfence to handle volatile store", SET_OPTION_BIT(TR_X86UseMFENCE), "F", NOT_IN_SUBSET},
+   {"zzarrayModificationCounter=", "O<nnn>\tCounter before we disable Pushkar's array changes",
+        TR::Options::set32BitNumeric, offsetof(OMR::Options, _zzarrayModificationCounter), 0, "F%d"},
    {NULL}
 };
 
@@ -2502,6 +2504,8 @@ OMR::Options::jitPreProcess()
    _lastSearchCount = INT_MAX;
    _firstOptTransformationIndex = self()->getMinFirstOptTransformationIndex();
    _lastOptTransformationIndex = self()->getMaxLastOptTransformationIndex();
+   /* Pushkar Modification */
+   _zzarrayModificationCounter = -99;
 
    _storeSinkingLastOpt = -1;
 #ifdef J9_PROJECT_SPECIFIC
