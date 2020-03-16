@@ -53,6 +53,7 @@ r15      EQU      15
 @2L19    DS       0H
 * z6 Limit of three concurrent cache line fetches
          DC    X'E3A03FFF0036' Store PREFETCH  4K 
+         PFD      10,513(,r3)   Store PREFETCH 4K  
          XC       0(256,r3),0(r3)     
          LA       r3,256(,r3)
          BRCT     r0,@2L19
