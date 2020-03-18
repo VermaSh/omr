@@ -42,25 +42,14 @@ r12      EQU      12
 r13      EQU      13
 r14      EQU      14
 r15      EQU      15
-         LTGR     r2,r2
+         LTGR     r3,r2
          JE       @2L3
-         AGHI     r2,-1
-         LGR      r0,r2
-         SRLG     r0,r0,8
-         LTR      r0,r0
-         LGR      r3,r1
-         JE       @2L20
+         LGR      r2,r1
+         XGR      r0,r0
+         XGR      r1,r1
 @2L19    DS       0H                                  
-* z6 Limit of three concurrent cache line fetches
-         DC    X'E3A03FFF0036' Store PREFETCH  4K 
-*         PFD      10,513(,r3)   Store PREFETCH 4K
-         XC       0(256,r3),0(r3)     
-         LA       r3,256(,r3)
-         BRCT     r0,@2L19                            
-@2L20    DS       0H                                  
-         LARL     r1,@2XC                           
-         EX       r2,0(0,r1)
+         MVCLE    r2,r0,0(r1)                             
+         JNE      @2L19
 @2L3     DS       0H                                  
-         CELQEPLG      return
-@2XC     XC       0(0,r3),0(r3)     
+         CELQEPLG      return     
          END
