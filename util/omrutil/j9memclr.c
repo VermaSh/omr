@@ -113,7 +113,11 @@ OMRZeroMemory(void *ptr, uintptr_t length)
 	memset(ptr, 0, (size_t)length);
 #elif defined(J9ZOS390)
 
-	memset(ptr, 0, (size_t)length);
+	if (((struct IHAPSA *)0)->FLCFGIEF) {
+		J9ZERZ10(ptr, length);
+	} else {
+		memset(ptr, 0, (size_t)length);
+	}
 #else
 #if (defined (LINUX) && defined(S390)) && !defined(OMRZTPF)
 	if (-1 == isZ10orGreater) {
@@ -125,7 +129,11 @@ OMRZeroMemory(void *ptr, uintptr_t length)
 		}
 	}
 
-	memset(ptr, 0, (size_t)length);
+	if (1 == isZ10orGreater) {
+		_j9Z10Zero(ptr, length);
+	} else {
+		memset(ptr, 0, (size_t)length);
+	}
 #else /* (defined (LINUX) && defined(S390)) && !defined(OMRZTPF) */
 	memset(ptr, 0, (size_t)length);
 #endif
