@@ -89,11 +89,16 @@
 
          ltgr     r3,r2
          je       L2L3
-         lgr      r2,r1
-         xgr      r0,r0
-         xgr      r1,r1
+         aghi     CARG2,-1
+         lgr      r0,CARG2
+         srlg     r0,r0,8
+         ltr      r0,r0
+         lgr      r4,CARG1
+         xgr       r0,r0
+         xgr       r1,r1
 L2L19:
-         mvcle    r2,r0,0(r1)
+## z6 Limit of three concurrent cache line fetches
+         mvcle    r4,r0,0(r1)
          jne      L2L19
 L2L3:
          br       CRA

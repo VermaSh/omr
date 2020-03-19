@@ -87,13 +87,17 @@
 .align 8
        START _j9Z10Zero
 
-         ltr      r3,r2
+         ltr      CARG2,CARG2
          je       L2L3
-         lr       r2,r1
+         ahi      CARG2,-1
+         lr       r0,CARG2
+         sra      r0,8
+         lr       r4,CARG1
          xr       r0,r0
          xr       r1,r1
 L2L19:
-         mvcle    r2,r0,0(r1)
+## z6 Limit of three concurrent cache line fetches
+         mvcle    r4,r0,0(r1)
          jne      L2L19
 L2L3:
          br       CRA
