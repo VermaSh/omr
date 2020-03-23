@@ -92,14 +92,14 @@
 .align 8
        START _j9Z10Zero
 
-         ltgr     CARG2,CARG2
+         ltgr     r4,CARG2
          je       L2L3
-         lgr      CARG3,CARG1
-         xgr      r1,r0
+         lgr      r5,CARG1
+         xgr      r0,r0
          xgr      r1,r1
 L2L19:
 ## z6 Limit of three concurrent cache line fetches
-         mvcle    CARG2,r0,0(r1)
+         mvcle    r4,r0,0(r1)
          jne      L2L19
 L2L3:
          br       CRA
