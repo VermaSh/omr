@@ -84,21 +84,22 @@
     .set CRA,14
     .equ r15,15
 
+## CARG2 pointer to field
+## CARG1 length of the field
+## load value to be loaded in r0 0
+## load padding value in r1 0
+
 .align 8
        START _j9Z10Zero
 
-         ltgr     r3,r2
+         ltgr     CARG2,CARG2
          je       L2L3
-         aghi     CARG2,-1
-         lgr      r0,CARG2
-         srlg     r0,r0,8
-         ltr      r0,r0
-         lgr      r4,CARG1
-         xgr       r0,r0
-         xgr       r1,r1
+         lgr      CARG3,CARG1
+         xgr      r1,r0
+         xgr      r1,r1
 L2L19:
 ## z6 Limit of three concurrent cache line fetches
-         mvcle    r4,r0,0(r1)
+         mvcle    CARG2,r0,0(r1)
          jne      L2L19
 L2L3:
          br       CRA
