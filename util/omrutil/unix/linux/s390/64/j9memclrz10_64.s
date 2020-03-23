@@ -99,7 +99,7 @@
          xgr      r1,r1
 L2L19:
 ## z6 Limit of three concurrent cache line fetches
-         mvcle    r4,r0,0
+         mvcle    r4,r0,0(r1)
          jne      L2L19
 L2L3:
          br       CRA
