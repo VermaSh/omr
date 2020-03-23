@@ -87,9 +87,9 @@
 .align 8
        START _j9Z10Zero
 
-         ltr      r4,CARG2
+         ltr      r5,CARG2
          je       L2L3
-         lr       r5,CARG1
+         lr       r4,CARG1
          xr       r0,r0
          xr       r1,r1
 L2L19:
