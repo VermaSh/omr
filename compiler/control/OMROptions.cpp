@@ -2500,7 +2500,7 @@ OMR::Options::jitPreProcess()
    _initialColdRunCount = -1;
    _initialColdRunBCount = -1;
    _initialSCount = TR_INITIAL_SCOUNT;
-   _lastOptIndex = INT_MAX;
+   _lastOptIndex = 14;
    _lastOptSubIndex = INT_MAX;
    _lastSearchCount = INT_MAX;
    _firstOptTransformationIndex = self()->getMinFirstOptTransformationIndex();
