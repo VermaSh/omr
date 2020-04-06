@@ -126,7 +126,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"bcount=",            "O<nnn>\tnumber of invocations before compiling methods with loops",
         TR::Options::setCount, offsetof(OMR::Options,_initialBCount), 0, " %d"},
    {"bestAvailOpt",       "O\tdeprecated; equivalent to optLevel=warm",
-        TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), noOpt},
+        TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), warm},
    {"bigAppThreshold=", "R<nnn>\tNumber of loaded classes used to determine if crt app is 'big'",
         TR::Options::setStaticNumeric, (intptr_t)&OMR::Options::_bigAppThreshold, 0, "F%d", NOT_IN_SUBSET},
    {"bigCalleeFreqCutoffAtHot=", "O<nnn>\tInliner threshold for block frequncy for cold callees for opt level higher then warm",
@@ -800,7 +800,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"hcrPatchClassPointers", "I\tcreate runtime assumptions for patching pointers to classes, even though they are now updated in-place", SET_OPTION_BIT(TR_HCRPatchClassPointers), "F"},
    {"help",               " \tdisplay this help information", TR::Options::helpOption, 0, 0, NULL, NOT_IN_SUBSET},
    {"help=",              " {regex}\tdisplay help for options whose names match {regex}", TR::Options::helpOption, 1, 0, NULL, NOT_IN_SUBSET},
-   {"highOpt",            "O\tdeprecated; equivalent to optLevel=hot", TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), noOpt},
+   {"highOpt",            "O\tdeprecated; equivalent to optLevel=hot", TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), warm},
    {"hotFieldReductionAlgorithm=",          "O\tcompilation's hot field combined block frequency reduction algorithm", TR::Options::setHotFieldReductionAlgorithm, 0, 0, "F", NOT_IN_SUBSET},
    {"hotFieldThreshold=", "M<nnn>\t The normalized frequency of a reference to a field to be marked as hot.   Values are 0 to 10000.  Default is 10",
                           TR::Options::setStaticNumeric, (intptr_t)&OMR::Options::_hotFieldThreshold, 0, " %d", NOT_IN_SUBSET},
@@ -903,7 +903,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&OMR::Options::_lowCodeCacheThreshold, 0, "F%d", NOT_IN_SUBSET},
    {"lowerCountsForAotCold", "M\tLower counts for cold aot runs", SET_OPTION_BIT(TR_LowerCountsForAotCold), "F", NOT_IN_SUBSET},
    {"lowOpt",             "O\tdeprecated; equivalent to optLevel=cold",
-        TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), noOpt},
+        TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), cold},
    {"maskAddresses",       "D\tremove addresses from trace file",                   SET_OPTION_BIT(TR_MaskAddresses), "F" },
    {"maxBytesToLeaveAllocatedInSharedPool=","R<nnn>\tnumber of memory segments to leave allocated",
                                          TR::Options::setStaticNumeric, (intptr_t)&OMR::Options::_maxBytesToLeaveAllocatedInSharedPool, 0, "F%d", NOT_IN_SUBSET},
@@ -985,12 +985,12 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
 
    {"optFile=",           "O<filename>\tRead in 'Performing' statements from <filename> and perform those opts instead of the usual ones",
         TR::Options::setString,  offsetof(OMR::Options,_optFileName), 0, "P%s"},
-   {"optLevel=cold",      "O\tcompile all methods at cold level",      TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), noOpt, "P"},
-   {"optLevel=hot",       "O\tcompile all methods at hot level",       TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), noOpt, "P"},
+   {"optLevel=cold",      "O\tcompile all methods at cold level",      TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), cold, "P"},
+   {"optLevel=hot",       "O\tcompile all methods at hot level",       TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), warm, "P"},
    {"optLevel=noOpt",     "O\tcompile all methods at noOpt level",     TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), noOpt, "P"},
-   {"optLevel=scorching", "O\tcompile all methods at scorching level", TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), noOpt, "P"},
-   {"optLevel=veryHot",   "O\tcompile all methods at veryHot level",   TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), noOpt, "P"},
-   {"optLevel=warm",      "O\tcompile all methods at warm level",      TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), noOpt, "P"},
+   {"optLevel=scorching", "O\tcompile all methods at scorching level", TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), warm, "P"},
+   {"optLevel=veryHot",   "O\tcompile all methods at veryHot level",   TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), warm, "P"},
+   {"optLevel=warm",      "O\tcompile all methods at warm level",      TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), warm, "P"},
    {"orderCompiles",      "C\tcompile methods in limitfile order", SET_OPTION_BIT(TR_OrderCompiles), "P" , NOT_IN_SUBSET},
    {"packedTest=",        "D{regex}\tforce particular code paths to test Java Packed Object",
         TR::Options::setRegex, offsetof(OMR::Options, _packedTest), 0, "P"},
@@ -1764,9 +1764,9 @@ OMR::Options::Options(
 
    // if this is the first compile -- try to figure out the hotness from the optionsets...
    //
-   optimizationPlan->setOptLevel(noOpt);
+   //optimizationPlan->setOptLevel(noOpt);
    TR::OptionSet *optionSet = TR::Options::findOptionSet(trMemory, index, lineNum, compilee, optimizationPlan->getOptLevel(), isAOT);
-   _optLevel = noOpt;
+   //_optLevel = noOpt;
    TR::Options *mainOptions;
    if (optionSet)
       mainOptions = optionSet->getOptions();
@@ -2492,7 +2492,7 @@ OMR::Options::jitPreProcess()
    self()->setOption(TR_DisableTreePatternMatching);
    self()->setOption(TR_DisableHalfSlotSpills);
 
-   _optLevel = noOpt;
+   _optLevel = warm;
    _initialOptLevel = _quickstartDetected ? cold : -1; // Not initialized
    _initialCount  = -1;
    _initialBCount = -1;
