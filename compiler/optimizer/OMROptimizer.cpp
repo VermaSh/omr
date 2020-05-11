@@ -1567,9 +1567,6 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
    if (doThisOptimizationIfEnabled && manager->getRequestedBlocks()->isEmpty())
       doThisOptimization = false;
 
-
-   traceMsg(comp(), "doThisOptIs %d\n", doThisOptimization);
-
    int32_t actualCost = 0;
    static int32_t optDepth = 1;
 
@@ -1641,7 +1638,6 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
          else
             break;
          }
-      traceMsg(comp(), "numIters %d\n", numIters);
 
       optDepth --;
 
@@ -1998,7 +1994,6 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
       int32_t origNodeCount = comp()->getNodeCount();
       int32_t origCfgNodeCount = comp()->getFlowGraph()->getNextNodeNumber();
       int32_t origOptMsgIndex = self()->getOptMessageIndex();
-      traceMsg(comp(), "origOptMsgIndex %d\n", origOptMsgIndex);
 
       if (comp()->isOutermostMethod() && (comp()->getFlowGraph()->getMaxFrequency() < 0) && !manager->getDoNotSetFrequencies())
          {
@@ -2016,9 +2011,6 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
 
       if (doThisOptimizationIfEnabled)
          manager->setPerformOnlyOnEnabledBlocks(true);
-
-      traceMsg(comp(), "doThisOptimizationIfEnabled %d\n", doThisOptimizationIfEnabled);
-      traceMsg(comp(), "optIndex %d\n", optIndex);
 
       // check if method exceeds loop or basic block threshold
       if (manager->getRequiresStructure() && comp()->getFlowGraph()->getStructure())
@@ -2110,7 +2102,6 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
       manager->setTrace(origTraceSetting);
 
       int32_t finalOptMsgIndex = self()->getOptMessageIndex();
-      traceMsg(comp(), "finalOptMsgIndex %d\n", finalOptMsgIndex);
       if ((finalOptMsgIndex != origOptMsgIndex ) &&  !manager->getDoesNotRequireTreeDumps())
            comp()->reportOptimizationPhaseForSnap(optNum);
 
@@ -2171,7 +2162,6 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
          comp()->dumpMethodTrees("Trees after ", manager->name(), getMethodSymbol());
       else if (finalOptMsgIndex == origOptMsgIndex)
          {
-         traceMsg(comp(), "_lastDumpOptPhaseTrees %d, _firstDumpOptPhaseTrees %d\n", _lastDumpOptPhaseTrees, _firstDumpOptPhaseTrees);
          dumpOptDetails(comp(), "No transformations done by this pass -- omitting listings\n");
          if (needStructureDump && comp()->getDebug() && comp()->getFlowGraph()->getStructure())
             {
