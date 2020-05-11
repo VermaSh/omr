@@ -1548,7 +1548,6 @@ OMR::SymbolReferenceTable::findOrCreateAutoSymbolImpl(TR::ResolvedMethodSymbol *
          {
          List<TR::SymbolReference> & list2 = slot < 0 ? owningMethodSymbol->getPendingPushSymRefs(-(slot-1) - 1) :
                                                               owningMethodSymbol->getAutoSymRefs(slot+1);
-
          ListIterator<TR::SymbolReference> i2(&list2);
          TR::SymbolReference * symRef2 = i2.getFirst();
          for (; symRef2; symRef2 = i2.getNext())
@@ -1571,7 +1570,6 @@ OMR::SymbolReferenceTable::findOrCreateAutoSymbolImpl(TR::ResolvedMethodSymbol *
          {
          List<TR::SymbolReference> & list2 = slot < 0 ? owningMethodSymbol->getPendingPushSymRefs(-(slot+1) - 1) :
                                                           owningMethodSymbol->getAutoSymRefs(slot-1);
-
          ListIterator<TR::SymbolReference> i2(&list2);
          TR::SymbolReference * symRef2 = i2.getFirst();
          for (; symRef2; symRef2 = i2.getNext())
@@ -1597,13 +1595,13 @@ OMR::SymbolReferenceTable::findOrCreateAutoSymbolImpl(TR::ResolvedMethodSymbol *
    if (comp()->getOption(TR_MimicInterpreterFrameShape) || comp()->getOption(TR_EnableOSR))
       reuseAuto = false;
 
-   if (reuseAuto && !isInternalPointer)
+   if (reuseAuto && !isInternalPointer) {
       symRef = findAvailableAuto(type, true, isAdjunct);
+   }
 
    if (!symRef)
       {
       TR::AutomaticSymbol * sym = NULL;
-
       if (isInternalPointer)
          {
          sym = size ? TR::AutomaticSymbol::createInternalPointer(trHeapMemory(), type, size, comp()->fe()) :
@@ -1697,6 +1695,7 @@ OMR::SymbolReferenceTable::findAvailableAuto(List<TR::SymbolReference> & availab
       for (prev = 0, a = autos.getFirst(); a; prev = autos.getCurrentElement(), a = autos.getNext())
          if (type == a->getSymbol()->getDataType() &&
              !notSharing &&
+             a->canReuse() &&
              !a->getSymbol()->holdsMonitoredObject() &&
              !a->hasKnownObjectIndex() &&
              (a->isAdjunct() == isAdjunct) &&
@@ -1708,7 +1707,6 @@ OMR::SymbolReferenceTable::findAvailableAuto(List<TR::SymbolReference> & availab
             return a;
             }
       }
-
    return 0;
    }
 
@@ -1774,6 +1772,11 @@ OMR::SymbolReferenceTable::findOrCreatePendingPushTemporary(
    {
 #ifdef J9_PROJECT_SPECIFIC
    TR_ASSERT(!type.isBCD() || size,"binary coded decimal types must provide a size\n");
+   if (!(!owningMethodSymbol->comp()->getOption(TR_EnableOSR) || (slot + TR::Symbol::convertTypeToNumberOfSlots(type) - 1) < owningMethodSymbol->getNumPPSlots())) {
+       printf("!owningMethodSymbol->comp()->getOption(TR_EnableOSR) -> %d\n", !owningMethodSymbol->comp()->getOption(TR_EnableOSR));
+       printf("(slot + TR::Symbol::convertTypeToNumberOfSlots(type) - 1) -> %d\n", (slot + TR::Symbol::convertTypeToNumberOfSlots(type) - 1));
+       printf("owningMethodSymbol->getNumPPSlots() -> %d\n", owningMethodSymbol->getNumPPSlots());
+   }
    TR_ASSERT_FATAL(!owningMethodSymbol->comp()->getOption(TR_EnableOSR) || (slot + TR::Symbol::convertTypeToNumberOfSlots(type) - 1) < owningMethodSymbol->getNumPPSlots(),
       "cannot create a pending push temporary that exceeds the number of slots for this method\n");
 #endif
