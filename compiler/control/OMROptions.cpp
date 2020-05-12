@@ -986,7 +986,7 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
    {"optFile=",           "O<filename>\tRead in 'Performing' statements from <filename> and perform those opts instead of the usual ones",
         TR::Options::setString,  offsetof(OMR::Options,_optFileName), 0, "P%s"},
    {"optLevel=cold",      "O\tcompile all methods at cold level",      TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), cold, "P"},
-   {"optLevel=hot",       "O\tcompile all methods at hot level",       TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), warm, "P"},
+   {"optLevel=hot",       "O\tcompile all methods at hot level",       TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), hot, "P"},
    {"optLevel=noOpt",     "O\tcompile all methods at noOpt level",     TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), noOpt, "P"},
    {"optLevel=scorching", "O\tcompile all methods at scorching level", TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), scorching, "P"},
    {"optLevel=veryHot",   "O\tcompile all methods at veryHot level",   TR::Options::set32BitValue, offsetof(OMR::Options, _optLevel), veryHot, "P"},
