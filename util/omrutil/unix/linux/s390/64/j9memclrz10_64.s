@@ -84,24 +84,61 @@
     .set CRA,14
     .equ r15,15
 
-## CARG2 pointer to field
-## CARG1 length of the field
-## load value to be loaded in r0 0
-## load padding value in r1 0
-
 .align 8
        START _j9Z10Zero
 
-         ltgr     r5,CARG2
+         ltgr     CARG2,CARG2
          je       L2L3
+         aghi     CARG2,-1
+         lgr      r0,CARG2
+         srlg     r0,r0,8
+         ltr      r0,r0
          lgr      r4,CARG1
-         xgr      r0,r0
-         xgr      r1,r1
+         je       L2L20
+## must be greater than 256 bytes
+## Check if Greater than 1024 bytes to clear
+         chi      r0,3
+         jh       GT1024B
+         jl       LT768B
+         .long    0xE3204301
+         .long    0x0036E320
+         .long    0x42010036
+         j        LE1024B
+## check if greater than 512 bytes
+LT768B:
+         chi      r0,2
+         jl       LE1024B
+         .long    0xE3204201
+         .short   0x0036
+         j        LE1024B
+## Greater than 512 bytes to clear so subtract two from loop count
+GT1024B:
+         ahi      r0,-3
 L2L19:
 ## z6 Limit of three concurrent cache line fetches
-         mvcle    r4,r0,0(r1)
-         jne      L2L19
+         .long    0xE3204201
+         .long    0x0036E320
+         .long    0x43010036
+         xc       0(256,r4),0(r4)
+         la       r4,256(,r4)
+         .long    0xE3204201
+         .long    0x0036E320
+         .long    0x43010036
+         xc       0(256,r4),0(r4)
+         la       r4,256(,r4)
+         brct     r0,L2L19
+## add 2 back into loop count
+         ahi      r0,3
+LE1024B:
+         xc       0(256,r4),0(r4)
+         la       r4,256(,r4)
+         brct     r0,LE1024B
+L2L20:
+         larl     r1,L2XC
+         ex       CARG2,0(0,r1)
 L2L3:
          br       CRA
+L2XC:
+         xc       0(1,r4),0(r4)
 
        END _j9Z10Zero
