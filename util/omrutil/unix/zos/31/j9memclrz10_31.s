@@ -69,13 +69,15 @@ GT1024B  AHI      r0,-3
          DC    X'E32033010036' Store PREFETCH NEXT LINE
          XC       0(256,r3),0(r3)     
          LA       r3,256(,r3)
+         AHI      r0,-1    * subtract 1 from loop count
+         BRC      8,@2L24  * take the jump if loop count is 0
          DC    X'E32032010036' Store PREFETCH NEXT LINE
          DC    X'E32033010036' Store PREFETCH NEXT LINE
          XC       0(256,r3),0(r3)     
          LA       r3,256(,r3)
          BRCT     r0,@2L19                            
 * add 2 back into loop count
-         AHI      r0,3
+@2L24    AHI      r0,3
 LE1024B  XC       0(256,r3),0(r3)     
          LA       r3,256(,r3)
          BRCT     r0,LE1024B                           

@@ -121,6 +121,8 @@ L2L19:
          .long    0x43010036
          xc       0(256,r4),0(r4)
          la       r4,256(,r4)
+         ahi      r0,-1    ## subtract 1 from loop count
+         brc      8,L2L24  ## take the jump if loop count is 0
          .long    0xE3204201
          .long    0x0036E320
          .long    0x43010036
@@ -128,6 +130,7 @@ L2L19:
          la       r4,256(,r4)
          brct     r0,L2L19
 ## add 2 back into loop count
+L2L24:
          ahi      r0,3
 LE1024B:
          xc       0(256,r4),0(r4)
