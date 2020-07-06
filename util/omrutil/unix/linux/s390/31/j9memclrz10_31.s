@@ -99,35 +99,24 @@
          chi      r0,3
          jh       GT1024B
          jl       LT768B
-         .long    0xE3204301
-         .long    0x0036E320
-         .long    0x42010036
          j        LE1024B
 ## check if greater than 512 bytes
 LT768B:
          chi      r0,2
          jl       LE1024B
-         .long    0xE3204201
-         .short   0x0036
          j        LE1024B
 ## Greater than 512 bytes to clear so subtract two from loop count
 GT1024B:
          ahi      r0,-3
 L2L19:
 ## z6 Limit of three concurrent cache line fetches
-         .long    0xE3204201
-         .long    0x0036E320
-         .long    0x43010036
          xc       0(256,r4),0(r4)
          la       r4,256(,r4)
          ahi      r0,-1    ## subtract 1 from loop count
          brc      8,L2L24  ## take the jump if loop count is 0
-         .long    0xE3204201
-         .long    0x0036E320
-         .long    0x43010036
          xc       0(256,r4),0(r4)
          la       r4,256(,r4)
-         brct     r0,L2L19
+         brct     r0,L2L19 ## other loop counter subtraction happens here
 ## add 2 back into loop count
 L2L24:
          ahi      r0,3

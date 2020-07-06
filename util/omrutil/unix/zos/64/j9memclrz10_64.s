@@ -55,26 +55,19 @@ r15      EQU      15
          CHI      r0,3
          JH       GT1024B
          JL       LT768B
-         DC    X'E32032010036' Store PREFETCH NEXT LINE
-         DC    X'E32033010036' Store PREFETCH NEXT LINE
          J        LE1024B
 * check if greater than 512 bytes
 LT768B   CHI      r0,2
          JL       LE1024B
-         DC    X'E32032010036' Store PREFETCH NEXT LINE
          J        LE1024B
 * Greater than 512 bytes to clear so subtract two from loop count
 GT1024B  AHI      r0,-3      
 @2L19    DS       0H                                  
 * z6 Limit of three concurrent cache line fetches
-         DC    X'E32032010036' Store PREFETCH NEXT LINE
-         DC    X'E32033010036' Store PREFETCH NEXT LINE
          XC       0(256,r3),0(r3)     
          LA       r3,256(,r3)
          AHI      r0,-1    * subtract 1 from loop count
          BRC      8,@2L24  * take the jump if loop count is 0
-         DC    X'E32032010036' Store PREFETCH NEXT LINE
-         DC    X'E32033010036' Store PREFETCH NEXT LINE
          XC       0(256,r3),0(r3)     
          LA       r3,256(,r3)
          BRCT     r0,@2L19                            
