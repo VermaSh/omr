@@ -1288,6 +1288,9 @@ TR::Node *
 OMR::Node::createStore(TR::SymbolReference * symRef, TR::Node * value, TR::ILOpCodes op, size_t size)
    {
    TR::Node *store = TR::Node::createWithSymRef(op, 1, 1, value, symRef);
+   // Conservatively marking internal pointers in stores as non-reusable
+   if (symRef != NULL && value->isInternalPointer())
+      symRef->setReuse(false);
    return store;
    }
 
@@ -1296,6 +1299,9 @@ OMR::Node::createStore(TR::Node *originatingByteCodeNode, TR::SymbolReference * 
    {
    TR::DataType type = symRef->getSymbol()->getDataType();
    TR::ILOpCodes op = TR::comp()->il.opCodeForDirectStore(type);
+   // Conservatively marking internal pointers in stores as non-reusable
+   if (symRef != NULL && originatingByteCodeNode->isInternalPointer())
+      symRef->setReuse(false);
    return TR::Node::createWithSymRef(originatingByteCodeNode, op, 1, value, symRef);
    }
 

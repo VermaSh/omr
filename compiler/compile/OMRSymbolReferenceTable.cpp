@@ -1698,6 +1698,7 @@ OMR::SymbolReferenceTable::findAvailableAuto(List<TR::SymbolReference> & availab
       for (prev = 0, a = autos.getFirst(); a; prev = autos.getCurrentElement(), a = autos.getNext())
          if (type == a->getSymbol()->getDataType() &&
              !notSharing &&
+             a->canReuse() &&
              !a->getSymbol()->holdsMonitoredObject() &&
              !a->hasKnownObjectIndex() &&
              (a->isAdjunct() == isAdjunct) &&
@@ -1775,6 +1776,11 @@ OMR::SymbolReferenceTable::findOrCreatePendingPushTemporary(
    {
 #ifdef J9_PROJECT_SPECIFIC
    TR_ASSERT(!type.isBCD() || size,"binary coded decimal types must provide a size\n");
+   if (!(!owningMethodSymbol->comp()->getOption(TR_EnableOSR) || (slot + TR::Symbol::convertTypeToNumberOfSlots(type) - 1) < owningMethodSymbol->getNumPPSlots())) {
+      printf("!owningMethodSymbol->comp()->getOption(TR_EnableOSR) -> %d\n", !owningMethodSymbol->comp()->getOption(TR_EnableOSR));
+      printf("(slot + TR::Symbol::convertTypeToNumberOfSlots(type) - 1) -> %d\n", (slot + TR::Symbol::convertTypeToNumberOfSlots(type) - 1));
+      printf("owningMethodSymbol->getNumPPSlots() -> %d\n", owningMethodSymbol->getNumPPSlots());
+   }
    TR_ASSERT_FATAL(!owningMethodSymbol->comp()->getOption(TR_EnableOSR) || (slot + TR::Symbol::convertTypeToNumberOfSlots(type) - 1) < owningMethodSymbol->getNumPPSlots(),
       "cannot create a pending push temporary that exceeds the number of slots for this method\n");
 #endif
