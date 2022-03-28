@@ -1185,6 +1185,11 @@ public:
    void setIsInternalPointer(bool v);
    const char * printIsInternalPointer();
 
+   // Flag used by TR::aloadi
+   bool isDataAddrPointer();
+   void setIsDataAddrPointer(bool v);
+   const char * printIsDataAddrPointer();
+
    // Flags used by TR::arraytranslate and TR::arraytranslateAndTest
    bool isArrayTRT();
    void setArrayTRT(bool v);
@@ -1962,6 +1967,9 @@ protected:
 
       // Flag used by TR::aiadd and TR::aladd
       internalPointer                       = 0x00008000,
+
+      // dataAddr pointer node
+      dataAddrPointer                       = 0x0F000000,
 
       // Flags used by TR::arraytranslate and TR::arraytranslateAndTest
       arrayTRT                              = 0x00008000,  ///< used by arraytranslateAndTest

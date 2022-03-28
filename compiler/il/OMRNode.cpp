@@ -6154,6 +6154,27 @@ OMR::Node::printIsInternalPointer()
    }
 
 
+bool
+OMR::Node::isDataAddrPointer()
+   {
+   return _flags.testAny(dataAddrPointer) && self()->getOpCodeValue() == TR::aloadi;
+   }
+
+void
+OMR::Node::setIsDataAddrPointer(bool v)
+   {
+   TR::Compilation *c = TR::comp();
+   TR_ASSERT_FATAL_WITH_NODE(self(), self()->getOpCodeValue() == TR::aloadi, "Opcode must be aloadi");
+   if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting dataAddrPointer flag on node %p to %d\n", self(), v))
+      _flags.set(dataAddrPointer, v);
+   }
+
+const char *
+OMR::Node::printIsDataAddrPointer()
+   {
+   return self()->isDataAddrPointer() ? "dataAddrPointer " : "";
+   }
+
 
 bool
 OMR::Node::isArrayTRT()
