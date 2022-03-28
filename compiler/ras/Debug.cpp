@@ -974,6 +974,7 @@ TR_Debug::nodePrintAllFlags(TR::Node *node, TR_PrettyPrinterString &output)
    output.appendf(format, node->printCanDesynchronizeCall());
    output.appendf(format, node->printContainsCompressionSequence());
    output.appendf(format, node->printIsInternalPointer());
+   output.appendf(format, node->printIsDataAddrPointer());
    output.appendf(format, node->printIsMaxLoopIterationGuard());
    output.appendf(format, node->printIsProfiledGuard()     );
    output.appendf(format, node->printIsInterfaceGuard()    );
