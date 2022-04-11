@@ -7782,14 +7782,24 @@ bool TR_LoopVersioner::depsForLoopEntryPrep(
    if (canPrivatizeRootNode && requiresPrivatization(node))
       return addLoopEntryPrepDep(LoopEntryPrep::PRIVATIZE, node, deps, visited) != NULL;
 
+   traceMsg(comp(), "         sverma: depsForLoopEntryPrep: node %p.\n", node);
+
    // If this is an indirect access
    //
-   if (node->isInternalPointer() ||
-       (((node->getOpCode().isIndirect() && node->getOpCode().hasSymbolReference() && !node->getSymbolReference()->getSymbol()->isStatic()) || node->getOpCode().isArrayLength()) &&
-        !node->getFirstChild()->isInternalPointer()))
+   if (node->isInternalPointer()
+      || (  (  (node->getOpCode().isIndirect()
+               && node->getOpCode().hasSymbolReference()
+               && !node->getSymbolReference()->getSymbol()->isStatic())
+            || node->getOpCode().isArrayLength())
+         && !node->getFirstChild()->isInternalPointer())
+      )
       {
+      traceMsg(comp(), "             sverma: depsForLoopEntryPrep: 1. node %p.\n", node);
       if (!node->getFirstChild()->isThisPointer())
          {
+         /* if it is a load indirect address && the offset is 8 bytes we are probably dealing with
+            dataAddr load. so use the child for null check.
+          */
          dumpOptDetailsCreatingTest("null", node->getFirstChild());
          TR::Node *ifacmpeqNode = TR::Node::createif(TR::ifacmpeq, node->getFirstChild(), TR::Node::aconst(node, 0), _exitGotoTarget);
          LoopEntryPrep *nullTestPrep =
@@ -7815,9 +7825,13 @@ bool TR_LoopVersioner::depsForLoopEntryPrep(
            (firstChild->getOpCode().hasSymbolReference() &&
             firstChild->getSymbolReference()->getSymbol()->isAuto() &&
             firstChild->getSymbolReference()->getSymbol()->castToAutoSymbol()->isInternalPointer())))
+         {
+         traceMsg(comp(), "             sverma: depsForLoopEntryPrep: 1.a. node %p.\n", node);
          instanceOfReqd = false;
+         }
       else if (firstChild->getOpCode().hasSymbolReference())
          {
+         traceMsg(comp(), "             sverma: depsForLoopEntryPrep: 1.b. node %p.\n", node);
          TR::SymbolReference *symRef = firstChild->getSymbolReference();
          int32_t len;
          const char *sig = symRef->getTypeSignature(len);
@@ -7828,10 +7842,12 @@ bool TR_LoopVersioner::depsForLoopEntryPrep(
                instanceOfReqd = false;
             else
                testIsArray = true;
+            traceMsg(comp(), "             sverma: depsForLoopEntryPrep: 1.b.a node %p. instanceOfReqd: %d --- testIsArray: %d\n", node, instanceOfReqd, testIsArray);
             }
          else if (node->getOpCode().hasSymbolReference() &&
                   !node->getSymbolReference()->isUnresolved())
             {
+            traceMsg(comp(), "             sverma: depsForLoopEntryPrep: 1.b.b node %p.\n", node);
             TR::SymbolReference *otherSymRef = node->getSymbolReference();
 
             TR_OpaqueClassBlock *cl = NULL;
@@ -7960,7 +7976,7 @@ bool TR_LoopVersioner::depsForLoopEntryPrep(
             }
          }
       }
-  else if (node->getOpCode().isIndirect() && node->getFirstChild()->isInternalPointer())
+  else if (node->getOpCode().isIndirect() && node->getFirstChild()->isInternalPointer()) // the path we take
       {
       dumpOptDetailsCreatingTest("bounds", node);
 
@@ -8042,6 +8058,7 @@ bool TR_LoopVersioner::depsForLoopEntryPrep(
          }
 
       TR::Node *base = node->getFirstChild()->getFirstChild();
+      traceMsg(comp(), "sverma: node: %p\n", node);
       TR::Node *arrayLengthNode = TR::Node::create(TR::arraylength, 1, base);
 
       arrayLengthNode->setArrayStride(dataWidth);
@@ -9638,6 +9655,8 @@ void TR_LoopVersioner::emitPrep(LoopEntryPrep *prep, List<TR::Node> *comparisonT
       // Actually privatize now.
       TR::Node *value = emitExpr(prep->_expr);
       TR::DataType nodeType = value->getDataType();
+
+      traceMsg(comp(),"sverma: About to start privatizing node %p\n", value);
 
       // Privatization of internal pointers is unhandled. Existing internal
       // pointer temps are already autos, so they will not be privatized. For
