@@ -143,11 +143,8 @@ bool TR_LocalAnalysis::isSupportedNodeForFunctionality(TR::Node *node, TR::Compi
           if (!node->addressPointsAtObject())
              return false;
           }
-       printf("There was a match. node: %p\n", node);
        return true;
        }
-
-    printf("dataAddr load node didn't match any criteria. node: %p\n", node);
 
     return false;
     }
