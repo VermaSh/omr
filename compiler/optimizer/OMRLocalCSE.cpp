@@ -111,8 +111,7 @@ bool OMR::LocalCSE::shouldCopyPropagateNode(TR::Node *parent, TR::Node *node, in
 
 bool OMR::LocalCSE::shouldCommonNode(TR::Node *parent, TR::Node *node)
    {
-   return false;
-   // return isTreetopSafeToCommon();
+   return isTreetopSafeToCommon();
    }
 
 TR::Node * getRHSOfStoreDefNode(TR::Node * storeNode)
