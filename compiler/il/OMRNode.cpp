@@ -3703,7 +3703,21 @@ OMR::Node::skipConversions()
    return node;
    }
 
+TR::Node *
+OMR::Node::convertStoreDirectToLoadWithI2LIfNeeded()
+   {
+   TR::Node *retNode = NULL;
 
+   if (self()->getOpCode().isStoreDirect())
+      retNode = TR::Node::createLoad(self(), self()->getSymbolReference());
+   else if (self()->getReferenceCount() > 0)
+      retNode = self()->duplicateTree();
+   else
+      retNode = self();
+
+   retNode = retNode->createLongIfNeeded();
+   return retNode;
+   }
 
 TR::Node *
 OMR::Node::createLongIfNeeded()
