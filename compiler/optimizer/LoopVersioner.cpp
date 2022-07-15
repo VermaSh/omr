@@ -8011,28 +8011,57 @@ bool TR_LoopVersioner::depsForLoopEntryPrep(
       TR::Node *offset = node->getFirstChild()->getSecondChild();
       TR::Node *childInRequiredForm = NULL;
       TR::Node *indexNode = NULL;
-
+      TR::Node *arrayElementAddressNode = node->getFirstChild()->getFirstChild();
       int32_t headerSize = static_cast<int32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-      static struct temps
-         {
-         TR::ILOpCodes addOp;
-         TR::ILOpCodes constOp;
-         int32_t k;
-         }
-      a[] =
-         {{TR::iadd, TR::iconst,  headerSize},
-          {TR::isub, TR::iconst, -headerSize},
-          {TR::ladd, TR::lconst,  headerSize},
-          {TR::lsub, TR::lconst, -headerSize}};
 
-      for (int32_t index = sizeof(a)/sizeof(temps) - 1; index >= 0; --index)
+      // sverma: Need to figure out why we are reversing the operations done to the offset node
+      //       instead of just extracting the index. If it turns out that we don't need to reverse
+      //       the transformations, then we can just call findArrayIndexNode(...)
+      // childInRequiredForm = TR::TransformUtil::findArrayIndexNode(comp(), node);
+      if (arrayElementAddressNode->isDataAddrPointer())
          {
-         if (offset->getOpCodeValue() == a[index].addOp &&
-             offset->getSecondChild()->getOpCodeValue() == a[index].constOp &&
-             offset->getSecondChild()->getInt() == a[index].k)
+         /* childInRequiredForm is expected to be shift/multiply node. When
+            off heap allocation is enabled and the sibling is dataAddr pointer
+            node, instead of using objt_ptr + header_size we load address of first
+            array element from dataAddr field in the header and add the offset. So
+            the trees without dataAddr load look like this
+            aloadi < node
+               aladd
+                  ==>aload objt_ptr
+                  add < offset
+                     shl/mul < childInRequiredForm
+                     const array_header
+
+            this is what trees will look like with dataAddr load
+            aloadi < node
+               aladd
+                  ==>aload dataAddr_ptr (dataAddrPointer sharedMemory )
+                  shl/mul < childInRequiredForm/offset
+          */
+         childInRequiredForm = node->getFirstChild()->getSecondChild()->getFirstChild();
+         }
+      else
+         {
+         static struct temps
             {
-            childInRequiredForm = offset->getFirstChild();
-            break;
+            TR::ILOpCodes addOp;
+            TR::ILOpCodes constOp;
+            int32_t k;
+            }
+         a[] =
+            {{TR::iadd, TR::iconst,  headerSize},
+            {TR::isub, TR::iconst, -headerSize},
+            {TR::ladd, TR::lconst,  headerSize},
+            {TR::lsub, TR::lconst, -headerSize}};
+         for (int32_t index = sizeof(a)/sizeof(temps) - 1; index >= 0; --index)
+            {
+            if (offset->getOpCodeValue() == a[index].addOp &&
+               offset->getSecondChild()->getOpCodeValue() == a[index].constOp &&
+               offset->getSecondChild()->getInt() == a[index].k)
+               {
+               childInRequiredForm = offset->getFirstChild();
+               break;
+               }
             }
          }
 
@@ -8065,7 +8094,10 @@ bool TR_LoopVersioner::depsForLoopEntryPrep(
 
      if (!indexNode)
          {
-         if (!childInRequiredForm)
+         /* No need to subtract header size when using dataAddr field
+          * For Refernce see Walker.cpp:calculateElementAddressInContiguousArray.
+          */
+         if (!childInRequiredForm && !isOffHeapAllocationEnabled)
             {
             TR::Node *constNode = TR::Node::create(node, type.isInt32() ? TR::iconst : TR::lconst, 0, 0);
             indexNode = TR::Node::create(type.isInt32() ? TR::isub : TR::lsub, 2, offset, constNode);
@@ -8075,20 +8107,25 @@ bool TR_LoopVersioner::depsForLoopEntryPrep(
                constNode->setInt((int64_t)headerSize);
             }
          else
+            {
+            /* Either off heap allocation enabled and we use dataAddr pointer to get to the first
+             * array element. Hence, there was no need to add header size.
+             * OR, we simply didn't add array header to index.
+             */
             indexNode = childInRequiredForm;
+            }
 
 
          indexNode = TR::Node::create(type.isInt32() ? TR::iushr : TR::lushr, 2, indexNode,
                                           TR::Node::create(node, TR::iconst, 0, shiftWidth));
          }
 
-      traceMsg(comp(), "sverma: node: %p\n", node);
-      // Going a level further to get the array object pointer
-      TR::Node *base = node->getFirstChild()->getFirstChild();
-      if (node->isDataAddrPointer())
-         {
-         base = node->getFirstChild()->getFirstChild()->getFirstChild();
-         }
+
+      // TODO_sverma: call TR::TransformUtil::findArrayBaseNode(comp(), node) for array base
+      TR::Node *base = arrayElementAddressNode->getFirstChild();
+      if (base->isDataAddrPointer())
+         base = base->getFirstChild();
+
       TR::Node *arrayLengthNode = TR::Node::create(TR::arraylength, 1, base);
 
       arrayLengthNode->setArrayStride(dataWidth);
