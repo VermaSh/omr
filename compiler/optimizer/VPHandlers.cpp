@@ -1944,86 +1944,143 @@ static TR::Node *findArrayLengthNode(OMR::ValuePropagation *vp, TR::Node *node, 
 
 
 static TR::Node *findArrayIndexNode(OMR::ValuePropagation *vp, TR::Node *node, int32_t stride)
-  {
-  TR::Node *offset = node->getSecondChild();
-  bool usingAladd = (vp->comp()->target().is64Bit()
-                     ) ?
-          true : false;
+   {
+   TR::Node *offset = node->getSecondChild();
+   bool usingAladd = (vp->comp()->target().is64Bit()
+                        ) ?
+            true : false;
 
-  if (usingAladd)
-     {
-     int32_t constValue;
-     if ((offset->getOpCode().isAdd() || offset->getOpCode().isSub()) &&
-         offset->getSecondChild()->getOpCode().isLoadConst())
-        {
-        if (offset->getSecondChild()->getType().isInt64())
-           constValue = (int32_t) offset->getSecondChild()->getLongInt();
-        else
-           constValue = offset->getSecondChild()->getInt();
-        }
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(vp->cg()->fe());
+   J9JavaVM *vm = fej9->vmThread()->javaVM;
+   bool isOffHeapAllocationEnabled = vm->memoryManagerFunctions->j9gc_off_heap_allocation_enabled(vm);
 
-     if ((offset->getOpCode().isAdd() &&
-         (offset->getSecondChild()->getOpCode().isLoadConst() &&
-         (constValue == TR::Compiler->om.contiguousArrayHeaderSizeInBytes()))) ||
+   if (isOffHeapAllocationEnabled)
+      {
+      // TODO_sverma: Is it possible to have a scenario where offset is of type add?
+      // TODO_sverma: good candidate for array tree structure assert
+      TR::Node *offset2 = NULL;
+      if (offset->getOpCode()->isShiftLogical() ||
+         offset->getOpCode()->isMul())
+         {
+         offset2 = offset;
+         }
+      else
+         offset2 = offset->getFirstChild();
+      
+      if (offset2->getOpCodeValue() == TR::lmul)
+         {
+         TR::Node *mulStride = offset2->getSecondChild();
+         int32_t constValue;
+         if (mulStride->getOpCode().isLoadConst())
+            {
+            if (mulStride->getType().isInt64())
+               constValue = (int32_t) mulStride->getLongInt();
+            else
+               constValue = mulStride->getInt();
+            }
+
+         if (mulStride->getOpCode().isLoadConst() &&
+            constValue == stride)
+            {
+            if (offset2->getFirstChild()->getOpCodeValue() == TR::i2l)
+               return offset2->getFirstChild()->getFirstChild();
+            else
+               return offset2->getFirstChild();
+            }
+         }
+      else if (stride == 1)
+         return offset2;
+      }
+   else if (usingAladd)
+      {
+      /*
+         ladd (X>=0 ) (offset)
+            ==>lshl < index shifted after accounting for array stride (offset2)
+            ==>lload < constant
+         aladd
+         ==>aload < This will become dataAddr load
+         ==>ladd
+
+         TODO: need to recreate the trees based on the statements below
+         if Off heap allocation is enabled.
+            - check if aload node has dataAddr flag set
+            - If it is, second child of aladd will contain the index
+         */
+      // Get the constant added to the offset
+      int32_t constValue;
+      if ((offset->getOpCode().isAdd() || offset->getOpCode().isSub()) &&
+            offset->getSecondChild()->getOpCode().isLoadConst())
+         {
+         if (offset->getSecondChild()->getType().isInt64())
+            constValue = (int32_t) offset->getSecondChild()->getLongInt();
+         else
+            constValue = offset->getSecondChild()->getInt();
+         }
+
+      // sverma: Enter if only if adding or subtracting header size
+      if ((offset->getOpCode().isAdd() &&
+            (offset->getSecondChild()->getOpCode().isLoadConst() &&
+            (constValue == TR::Compiler->om.contiguousArrayHeaderSizeInBytes()))) ||
+            (offset->getOpCode().isSub() &&
+            (offset->getSecondChild()->getOpCode().isLoadConst() &&
+            (constValue == -(int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes()))))
+         {
+         TR::Node *offset2 = offset->getFirstChild();
+         if (offset2->getOpCodeValue() == TR::lmul)
+            {
+            TR::Node *mulStride = offset2->getSecondChild();
+            int32_t constValue;
+            if (mulStride->getOpCode().isLoadConst())
+               {
+               if (mulStride->getType().isInt64())
+                  constValue = (int32_t) mulStride->getLongInt();
+               else
+                  constValue = mulStride->getInt();
+               }
+
+            if (mulStride->getOpCode().isLoadConst() &&
+               constValue == stride)
+               {
+               if (offset2->getFirstChild()->getOpCodeValue() == TR::i2l)
+                  return offset2->getFirstChild()->getFirstChild();
+               else
+                  return offset2->getFirstChild();
+               }
+            }
+         else if (stride == 1)
+            return offset2;
+         }
+      }
+   else
+      {
+      if ((offset->getOpCode().isAdd() &&
+            offset->getSecondChild()->getOpCode().isLoadConst() &&
+            offset->getSecondChild()->getInt() == TR::Compiler->om.contiguousArrayHeaderSizeInBytes()) ||
          (offset->getOpCode().isSub() &&
-         (offset->getSecondChild()->getOpCode().isLoadConst() &&
-         (constValue == -(int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes()))))
-        {
-        TR::Node *offset2 = offset->getFirstChild();
-        if (offset2->getOpCodeValue() == TR::lmul)
-           {
-           TR::Node *mulStride = offset2->getSecondChild();
-           int32_t constValue;
-           if (mulStride->getOpCode().isLoadConst())
-              {
-              if (mulStride->getType().isInt64())
-                 constValue = (int32_t) mulStride->getLongInt();
-              else
-                 constValue = mulStride->getInt();
-              }
-
-           if (mulStride->getOpCode().isLoadConst() &&
-              constValue == stride)
-              {
-              if (offset2->getFirstChild()->getOpCodeValue() == TR::i2l)
-                 return offset2->getFirstChild()->getFirstChild();
-              else
-                 return offset2->getFirstChild();
-              }
-           }
-        else if (stride == 1)
-          return offset2;
-        }
-     }
-  else
-     {
-     if ((offset->getOpCode().isAdd() &&
-          (offset->getSecondChild()->getOpCode().isLoadConst() &&
-           (offset->getSecondChild()->getInt() == TR::Compiler->om.contiguousArrayHeaderSizeInBytes()))) ||
-           (offset->getOpCode().isSub() &&
-           (offset->getSecondChild()->getOpCode().isLoadConst() &&
-           (offset->getSecondChild()->getInt() == -(int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes()))))
-        {
-        TR::Node *offset2 = offset->getFirstChild();
-        if (offset2->getOpCodeValue() == TR::imul)
-           {
-           TR::Node *mulStride = offset2->getSecondChild();
-           if (mulStride->getOpCode().isLoadConst() &&
+            offset->getSecondChild()->getOpCode().isLoadConst() &&
+            offset->getSecondChild()->getInt() == -(int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes()))
+         {
+         TR::Node *offset2 = offset->getFirstChild();
+         if (offset2->getOpCodeValue() == TR::imul)
+            {
+            TR::Node *mulStride = offset2->getSecondChild();
+            if (mulStride->getOpCode().isLoadConst() &&
                mulStride->getInt() == stride)
-              {
-              return offset2->getFirstChild();
-              }
-           }
-        else if (stride == 1)
-           return offset2;
-        }
-     }
-  return NULL;
-  }
+               {
+               return offset2->getFirstChild();
+               }
+            }
+         else if (stride == 1)
+            return offset2;
+         }
+      }
+   return NULL;
+   }
 
 // For TR::aiadd and TR::aladd
 TR::Node *constrainAddressRef(OMR::ValuePropagation *vp, TR::Node *node)
    {
+   // sverma: Does this do anything?
    constrainChildren(vp, node);
 
    TR::Node *parent = vp->getCurrentParent();
