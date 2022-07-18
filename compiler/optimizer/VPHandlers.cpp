@@ -1195,7 +1195,7 @@ TR::Node *constrainAnyIntLoad(OMR::ValuePropagation *vp, TR::Node *node)
                TR::VPConstString *constString = baseVPConstraint->getClassType()->asConstString();
 
                uintptr_t offset = vp->comp()->target().is64Bit() ? (uintptr_t)index->getUnsignedLongInt() : (uintptr_t)index->getUnsignedInt();
-               uintptr_t chIdx = NULL;
+               uintptr_t chIdx = 0;
                if (vp->cg()->comp()->fej9()->isOffHeapAllocationEnabled())
                   {
                   chIdx = (offset) / 2;
@@ -1969,8 +1969,8 @@ static TR::Node *findArrayIndexNode(OMR::ValuePropagation *vp, TR::Node *node, i
       // TODO_sverma: Is it possible to have a scenario where offset is of type add?
       // TODO_sverma: good candidate for array tree structure assert
       TR::Node *offset2 = NULL;
-      if (offset->getOpCode()->isShiftLogical() ||
-         offset->getOpCode()->isMul())
+      if (offset->getOpCode().isShiftLogical() ||
+         offset->getOpCode().isMul())
          {
          offset2 = offset;
          }
