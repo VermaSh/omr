@@ -8094,6 +8094,9 @@ bool TR_LoopVersioner::depsForLoopEntryPrep(
 
      if (!indexNode)
          {
+         TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
+         J9JavaVM *vm = fej9->vmThread()->javaVM;
+         bool isOffHeapAllocationEnabled = vm->memoryManagerFunctions->j9gc_off_heap_allocation_enabled(vm);
          /* No need to subtract header size when using dataAddr field
           * For Refernce see Walker.cpp:calculateElementAddressInContiguousArray.
           */
