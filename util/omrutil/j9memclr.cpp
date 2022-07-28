@@ -23,7 +23,6 @@
 #include "omrcfg.h"
 #include "omr.h"
 #include "omrutil.h"
-#include <stdio.h>
 
 #if defined(J9ZOS390) || (defined(LINUX) && defined(S390))
 #include <stdlib.h>
@@ -129,10 +128,6 @@ OMRZeroMemory(void *ptr, uintptr_t length)
 	 */
 	memset(ptr, 0, (size_t)length);
 #elif defined(J9ZOS390)
-
-	static BOOLEAN enablePrints = (NULL != getenv("sverma_enablePrints"));
-	if (enablePrints)
-		printf("OMRZeroMemory: %d\n", length);
 
 	if (useJ9zerz10Assembly && ((struct IHAPSA *)0)->FLCFGIEF) {
 		J9ZERZ10(ptr, length);
