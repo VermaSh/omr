@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2022 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,6 @@
 #include <string.h>
 #endif
 #include "omrport.h"
-#include "omrutil.h"
 #if defined(RS6000) || defined (LINUXPPC) || defined (PPC)
 #include "omrportpriv.h"
 #include "omrportpg.h"
@@ -62,10 +61,27 @@
 int32_t
 omrcpu_startup(struct OMRPortLibrary *portLibrary)
 {
-#if defined(LINUXPPC) || defined(PPC) || defined(RS6000)
 	/* initialize the ppc level 1 cache line size */
-	PPG_mem_ppcCacheLineSize = getCacheLineSize();
-#endif /* defined(LINUXPPC) || defined(PPC) || defined(RS6000) */
+#if defined(RS6000) || defined (LINUXPPC) || defined (PPC)
+	int32_t ppcCacheLineSize;
+
+	int  i;
+	char buf[1024];
+	memset(buf, 255, 1024);
+
+	__asm__(
+		"dcbz 0, %0"
+		: /* no outputs */
+		:"r"((void *) &buf[512]));
+
+	for (i = 0, ppcCacheLineSize = 0; i < 1024; i++) {
+		if (buf[i] == 0) {
+			ppcCacheLineSize++;
+		}
+	}
+
+	PPG_mem_ppcCacheLineSize = ppcCacheLineSize;
+#endif
 
 	return 0;
 }
@@ -97,12 +113,13 @@ omrcpu_shutdown(struct OMRPortLibrary *portLibrary)
 void
 omrcpu_flush_icache(struct OMRPortLibrary *portLibrary, void *memoryPointer, uintptr_t byteAmount)
 {
-#if defined(LINUXPPC) || defined(PPC) || defined(RS6000)
-	uint32_t cacheLineSize = PPG_mem_ppcCacheLineSize;
-	unsigned char *addr = NULL;
-	unsigned char *limit = (unsigned char *)
-			(((uintptr_t)memoryPointer + byteAmount + (cacheLineSize - 1))
-					/ cacheLineSize * cacheLineSize);
+#if defined(RS6000) || defined (LINUXPPC) || defined (PPC)
+
+	int32_t cacheLineSize = PPG_mem_ppcCacheLineSize;
+	unsigned char  *addr;
+	unsigned char  *limit;
+	limit = (unsigned char *)(((unsigned long)memoryPointer + (unsigned int)byteAmount + (cacheLineSize - 1))
+							  / cacheLineSize * cacheLineSize);
 
 	/* for each cache line, do a data cache block flush */
 	for (addr = (unsigned char *)memoryPointer ; addr < limit; addr += cacheLineSize) {
@@ -125,14 +142,15 @@ omrcpu_flush_icache(struct OMRPortLibrary *portLibrary, void *memoryPointer, uin
 	__asm__("sync");
 	__asm__("isync");
 
-#elif defined(AARCH64) || defined(ARM) /* defined(LINUXPPC) || defined(PPC) || defined(RS6000) */
+#elif defined(ARM) || defined(AARCH64) /* defined(RS6000) || defined(LINUXPPC) || defined(PPC) */
 #if defined(__GNUC__)
 	// GCC built-in function
-	__builtin___clear_cache(memoryPointer, (void *)((unsigned char *)memoryPointer + byteAmount));
-#else /* defined(__GNUC__) */
+	__builtin___clear_cache(memoryPointer, (void *)((char *)memoryPointer+byteAmount));
+#else
 #error Not supported
 #endif /* defined(__GNUC__) */
-#endif /* defined(LINUXPPC) || defined(PPC) || defined(RS6000) */
+#endif /* defined(ARM) || defined(AARCH64) */
+
 }
 
 int32_t
@@ -159,3 +177,7 @@ omrcpu_get_cache_line_size(struct OMRPortLibrary *portLibrary, int32_t *lineSize
 	}
 	return rc;
 }
+
+
+
+
