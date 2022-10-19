@@ -1995,6 +1995,11 @@ OMR::Z::CodeGenerator::doBinaryEncoding()
       {
       TR::Node *node = self()->comp()->getStartTree()->getNode();
       cursor = generateS390EInstruction(self(), TR::InstOpCode::BREAK, node, cursor);
+      TR::Register *codeReg2 = self()->machine()->getRealRegister(TR::RealRegister::GPR6);
+      TR::Register *codeReg1 = self()->machine()->getRealRegister(TR::RealRegister::GPR0);
+      cursor = generateRRInstruction(self(), TR::InstOpCode::LGR, self()->comp()->getStartTree()->getNode(), codeReg1, codeReg2, cursor);
+      cursor = generateRREInstruction(self(), TR::InstOpCode::ETND, self()->comp()->getStartTree()->getNode(), codeReg2, codeReg2, cursor);
+      cursor = generateRRInstruction(self(), TR::InstOpCode::LGR, self()->comp()->getStartTree()->getNode(), codeReg2, codeReg1, cursor);
       }
 
    if (recomp != NULL)
