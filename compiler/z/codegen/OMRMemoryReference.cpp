@@ -517,7 +517,7 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node * rootLoadOrStore, TR::CodeGen
          }
       else
          {
-         traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference: in Else block with node=%p %d\n", rootLoadOrStore, __LINE__);
+         traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference: canUseRX in Else block with node=%p %d\n", rootLoadOrStore, __LINE__);
          TR::Node *addressChild = rootLoadOrStore->getFirstChild();
          bool tryBID = (addressChild->getOpCodeValue() == TR::aiadd ||
                         addressChild->getOpCodeValue() == TR::aladd) &&
@@ -525,7 +525,7 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node * rootLoadOrStore, TR::CodeGen
                        self()->tryBaseIndexDispl(cg, rootLoadOrStore, addressChild);
          if (!tryBID)
             {
-            traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference: in if (!tryBID) block with node=%p %d\n", addressChild, __LINE__);
+            traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference: canUseRX in if (!tryBID) block with node=%p %d\n", addressChild, __LINE__);
             self()->populateMemoryReference(subTree, cg);
             recursivelyDecrementIncrementedNodesIfUnderRegister(cg, subTree, _incrementedNodesList, nodesAlreadyEvaluatedBeforeFoldingList, comp->incOrResetVisitCount(), false);
             cg->decReferenceCount(subTree);
@@ -697,15 +697,15 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node *addressChild, bool canUseInde
    {
    bool done = false;
 
-   traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference, node=%p %d\n", addressChild, __LINE__);
+   traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference canUseIndexReg, node=%p %d\n", addressChild, __LINE__);
    if (addressChild->getRegister() == NULL)
       {
-      traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference, node=%p %d\n", addressChild, __LINE__);
+      traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference canUseIndexReg, node=%p %d\n", addressChild, __LINE__);
       if (addressChild->getReferenceCount() == 1 &&
           addressChild->getOpCode().isAdd() &&
           addressChild->getSecondChild()->getOpCode().isLoadConst())
          {
-         traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference, node=%p %d\n", addressChild, __LINE__);
+         traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference canUseIndexReg, node=%p %d\n", addressChild, __LINE__);
          TR::Node *first = addressChild->getFirstChild();
          if (canUseIndexReg &&
              first->getOpCode().isAdd())
@@ -720,7 +720,7 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node *addressChild, bool canUseInde
             }
          else
             {
-            traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference, node=%p %d\n", addressChild, __LINE__);
+            traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference canUseIndexReg, node=%p %d\n", addressChild, __LINE__);
             _baseNode = first;
             _baseRegister = cg->evaluate(first);
             }
