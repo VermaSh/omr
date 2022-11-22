@@ -517,6 +517,7 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node * rootLoadOrStore, TR::CodeGen
          }
       else
          {
+         traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference: in Else block with node=%p %d\n", rootLoadOrStore, __LINE__);
          TR::Node *addressChild = rootLoadOrStore->getFirstChild();
          bool tryBID = (addressChild->getOpCodeValue() == TR::aiadd ||
                         addressChild->getOpCodeValue() == TR::aladd) &&
@@ -524,6 +525,7 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node * rootLoadOrStore, TR::CodeGen
                        self()->tryBaseIndexDispl(cg, rootLoadOrStore, addressChild);
          if (!tryBID)
             {
+            traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference: in if (!tryBID) block with node=%p %d\n", addressChild, __LINE__);
             self()->populateMemoryReference(subTree, cg);
             recursivelyDecrementIncrementedNodesIfUnderRegister(cg, subTree, _incrementedNodesList, nodesAlreadyEvaluatedBeforeFoldingList, comp->incOrResetVisitCount(), false);
             cg->decReferenceCount(subTree);
@@ -694,12 +696,16 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node *addressChild, bool canUseInde
      _offset(0), _flags(0), _storageReference(NULL), _fixedSizeForAlignment(0), _leftMostByte(0), _name(NULL), _incrementedNodesList(cg->comp()->trMemory())
    {
    bool done = false;
+
+   traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference, node=%p %d\n", addressChild, __LINE__);
    if (addressChild->getRegister() == NULL)
       {
+      traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference, node=%p %d\n", addressChild, __LINE__);
       if (addressChild->getReferenceCount() == 1 &&
           addressChild->getOpCode().isAdd() &&
           addressChild->getSecondChild()->getOpCode().isLoadConst())
          {
+         traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference, node=%p %d\n", addressChild, __LINE__);
          TR::Node *first = addressChild->getFirstChild();
          if (canUseIndexReg &&
              first->getOpCode().isAdd())
@@ -714,6 +720,7 @@ OMR::Z::MemoryReference::MemoryReference(TR::Node *addressChild, bool canUseInde
             }
          else
             {
+            traceMsg(cg->comp(), "OMR::Z::MemoryReference::MemoryReference, node=%p %d\n", addressChild, __LINE__);
             _baseNode = first;
             _baseRegister = cg->evaluate(first);
             }
@@ -1807,8 +1814,10 @@ OMR::Z::MemoryReference::populateMemoryReference(TR::Node * subTree, TR::CodeGen
 
    if (self()->doEvaluate(subTree, cg))
       {
+      traceMsg(cg->comp(), "OMR::Z::MemoryReference::populateMemoryReference: in if (self()->doEvaluate(subTree, cg)) block with node=%p %d\n", subTree, __LINE__);
       if (_baseRegister != NULL)
          {
+         traceMsg(cg->comp(), "OMR::Z::MemoryReference::populateMemoryReference: in if (_baseRegister != NULL) block with node=%p %d\n", subTree, __LINE__);
          if (_indexRegister != NULL)
             {
             self()->consolidateRegisters(subTree, cg);
@@ -1818,10 +1827,15 @@ OMR::Z::MemoryReference::populateMemoryReference(TR::Node * subTree, TR::CodeGen
          }
       else
          {
+         traceMsg(cg->comp(), "OMR::Z::MemoryReference::populateMemoryReference: in else block with node=%p %d\n", subTree, __LINE__);
          if (!self()->ZeroBasePtr_EvaluateSubtree(subTree, cg, this))
             {
+            traceMsg(cg->comp(), "OMR::Z::MemoryReference::populateMemoryReference: in ZeroBasePtr_EvaluateSubtree block with node=%p %d\n", subTree, __LINE__);
             if (_baseRegister == NULL)
+               {
+               traceMsg(cg->comp(), "OMR::Z::MemoryReference::populateMemoryReference: in _baseRegister == NULL block with node=%p %d\n", subTree, __LINE__);
                self()->setBaseRegister(cg->evaluate(subTree), cg);
+               }
             }
 
          _baseNode = subTree;
@@ -1888,6 +1902,7 @@ OMR::Z::MemoryReference::populateMemoryReference(TR::Node * subTree, TR::CodeGen
 
    if (noopNode && noopNode->getRegister() == NULL)
       {
+      traceMsg(cg->comp(), "OMR::Z::MemoryReference::populateMemoryReference: in noopNode && noopNode->getRegister() block with node=%p %d\n", subTree, __LINE__);
       if (subTree->getRegister() && subTree->getRegister()->getRegisterPair())
          noopNode->setRegister(subTree->getRegister()->getRegisterPair()->getLowOrder());
       else
@@ -1895,6 +1910,7 @@ OMR::Z::MemoryReference::populateMemoryReference(TR::Node * subTree, TR::CodeGen
 
       if (_baseNode == subTree)
          {
+         traceMsg(cg->comp(), "OMR::Z::MemoryReference::populateMemoryReference: in _baseNode == subTree block with node=%p %d\n", subTree, __LINE__);
          self()->setBaseRegister(noopNode->getRegister(), cg);
          _baseNode = noopNode;
          }
@@ -2262,8 +2278,10 @@ TR::Instruction *
 OMR::Z::MemoryReference::separateIndexRegister(TR::Node * node, TR::CodeGenerator * cg, bool enforce4KDisplacementLimit, TR::Instruction * preced, bool forceDueToAlignmentBump)
    {
    TR::Compilation *comp = cg->comp();
+   traceMsg(cg->comp(), "OMR::Z::MemoryReference::separateIndexRegister: just entered with node=%p %d\n", node, __LINE__);
    if (_indexRegister != NULL)
       {
+      traceMsg(cg->comp(), "OMR::Z::MemoryReference::separateIndexRegister: _indexRegister != NULL block with node=%p %d\n", node, __LINE__);
       if (_baseRegister == NULL)
          {
          // if baseRegister happens to be NULL, we can just set that to be the old index register and be done
@@ -3548,6 +3566,7 @@ generateS390RightAlignedMemoryReference(TR::MemoryReference& baseMR, TR::Node *n
 TR::MemoryReference *
 generateS390LeftAlignedMemoryReference(TR::MemoryReference& baseMR, TR::Node *node, int32_t offset, TR::CodeGenerator *cg, int32_t leftMostByte, bool enforceSSLimits)
    {
+   traceMsg(cg->comp(), "generateS390LeftAlignedMemoryReference with node=%p %d\n", node, __LINE__);
    TR_ASSERT(!node->getType().isAggregate(),"do not use aligned memrefs for aggrs on node %p\n",node);
    TR::MemoryReference *memRef = generateS390AlignedMemoryReference(baseMR, node, offset, cg, enforceSSLimits);
    memRef->setLeftAlignMemRef(leftMostByte);
