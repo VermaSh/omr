@@ -542,6 +542,157 @@ update your branch if needed.
 After you addressed the reviewer's comments and concerns, your PR may be
 approved and merged by a committer.
 
+# Working with 2 main branches
+
+Start state:
+```
+                        I---J  (C)
+                       /
+                  G---H  (B_mine)
+                 /
+            D---E---F  (B)
+           /
+  A---B---C---N---O  (main)
+```
+```bash
+# get new commits from B_mine in a separate branch
+# get new commits from C in a separate branch
+# problem is how do we extract my commits from B_mine and C after pulling
+#  new changes for B
+#  Solutions
+#  - Refer to the delta using old commit SHA
+#  - Create a patch which can be applied after rebase
+
+# Solution 1
+commit_delta_from_B_mine=$(git log --reverse --cherry-pick --right-only --no-merges --oneline --pretty=format:"%h" B..B_mine)
+commit_delta_from_C=$(git log --reverse --cherry-pick --right-only --no-merges --oneline --pretty=format:"%h" B_mine..C)
+```
+## Preserve commit hash of main branches
+Desired end state:
+```
+            D---E---F  (B)
+           /
+  A---B---C---N---O  (main)
+                   \
+                    D'---E'---F'---G---H  (B_mine)
+                                        \
+                                         I---J  (C)
+```
+
+```bash
+# Goal: How to extract changes from an upstream into your local copy
+# on B_mine
+# Get latest changes for main
+git fetch upstream main
+git checkout main
+git merge upstream/main
+
+# Get latest changes for second main (B)
+git fetch repo_B B
+git checkout -b B_rebased repo_B/B
+git rebase main
+
+git checkout B_mine_rebased
+git cherry-pick main..B # now we have latest changes in
+
+
+```
+
+```bash
+# Get latest changes for main
+git fetch upstream main
+git checkout main
+git merge upstream/main
+
+# Get latest changes for second main (B)
+git fetch repo_B B
+git checkout -b B_rebased repo_B/B
+
+# TODO: we can rename B_mine to C to make instructions easier
+# TODO: maybe add bash function as well?
+# Rebase B to include latest changes from main
+git checkout -b B_mine_rebased
+git rebase main
+git cherry-pick B..B_mine
+
+# Rebase C to include latest changes from B and main
+git checkout -b C_rebasead
+git cherry-pick B_mine..C
+```
+
+## Using `git-merge`
+Desired end state:
+```
+            D---E---F  (B)
+           /
+  A---B---C---N---O  (main)
+                  |\
+                  | D'---E'---F'---G---H  (B_mine)
+                  |\
+                  | I---J (C)
+                   \
+                    D'---E'---F'---G'---H'---I'---J'  (D)
+```
+
+```bash
+# Get latest changes for main
+git fetch upstream main
+git checkout main
+git merge upstream/main
+
+# Get latest changes for second main (B)
+git fetch repo_B B
+git checkout -b B_rebased repo_B/B
+
+git checkout -b B_mine_rebased
+git rebase main
+git cherry-pick B..B_mine
+
+git checkout -b
+```
+
+## if prototype branch doesn't have any changes from main2
+```bash
+# main1
+# main2
+# prototype1
+# prototype2
+
+# prototype branch is using main1
+git checkout -b prototype2 # from main2
+git cherry-pick main1..prototype1
+```
+
+## else
+```bash
+# use a base branch as base then cherry
+# main1
+# main2: doesn't matter if it has any changes from main1
+# prototype1: main2 rebased on main1
+#   - git branch --copy main2 prototype1
+#   - git rebase main1 prototype1
+# prototype2:
+#   - git branch copy --copy prototype2'
+# prototype2':
+#   - git branch --copy prototype1 prototype2
+#   - git rebase main1 prototype2
+
+
+main # master
+B # gc_off_heap
+B_mine # gc_off_heap_mine
+C # gc_off_heap_jit_changes (gc_off_heap_mine + jit_stuff)
+
+# rebased
+git fetch repo_B B:B
+git copy B B_mine_rebased
+git rebase main B_mine_rebased
+git copy B_mine_rebased C_rebased
+git checkout C_rebased
+git cherry-pick B_mine..C
+# now we have all changes, rebased on lastest changes from main2 and main1, in gc_off_heap_jit_changes_rebased
+# we can now delete old branches
+```
 
 # Additional resources
 
