@@ -2333,7 +2333,7 @@ OMR::Node::isNotCollected()
 bool
 OMR::Node::computeIsInternalPointer()
    {
-   TR_ASSERT(self()->getOpCode().hasPinningArrayPointer(), "Opcode %s is not supported, node is " POINTER_PRINTF_FORMAT, self()->getOpCode().getName(), self());
+   TR_ASSERT(self()->hasPinningArrayPointer(), "Opcode %s is not supported, node is " POINTER_PRINTF_FORMAT, self()->getOpCode().getName(), self());
    return self()->computeIsCollectedReference();
    }
 
@@ -3785,6 +3785,20 @@ OMR::Node::createStoresForVar(TR::SymbolReference * &nodeRef, TR::TreeTop *inser
    TR::SymbolReference *newArrayRef = NULL;
    TR::TreeTop *newStoreTree = NULL;
 
+   if (self()->isDataAddrPointer())
+      {
+      TR::Node *firstChild = self()->getFirstChild();
+      TR::Node *arrayLoadNode = NULL;
+      TR::SymbolReference *newArrayRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR::Address);
+      TR::Node *newStore = TR::Node::createStore(newArrayRef, firstChild);
+      TR::TreeTop *newStoreTree = TR::TreeTop::create(comp, newStore);
+      insertBefore = origInsertBefore->insertBefore(newStoreTree);
+      arrayLoadNode = TR::Node::createLoad(firstChild, newArrayRef);
+      self()->setAndIncChild(0, arrayLoadNode);
+      firstChild->recursivelyDecReferenceCount();
+      return insertBefore;
+      }
+
    bool isInternalPointer = false;
    if ((self()->hasPinningArrayPointer() &&
         self()->computeIsInternalPointer()) ||
@@ -3807,7 +3821,7 @@ OMR::Node::createStoresForVar(TR::SymbolReference * &nodeRef, TR::TreeTop *inser
       }
 
    if (isInternalPointer &&
-       self()->getOpCode().isArrayRef() &&
+       (self()->getOpCode().isArrayRef() || self()->isDataAddrPointer())&&
        (comp->getSymRefTab()->getNumInternalPointers() >= (comp->maxInternalPointers()/2) ||
         comp->cg()->supportsComplexAddressing()) &&
        (self()->getReferenceCount() == 1))
@@ -3819,7 +3833,7 @@ OMR::Node::createStoresForVar(TR::SymbolReference * &nodeRef, TR::TreeTop *inser
       TR::Node *intOrLongNode = NULL;
 
 
-      if (!firstChild->getOpCode().isArrayRef() &&
+      if ( (!firstChild->getOpCode().isArrayRef() || self()->isDataAddrPointer()) &&
           !firstChild->isInternalPointer()  /* &&
              (!firstChild->getOpCode().isLoadVarDirect() ||
               !firstChild->getSymbolReference()->getSymbol()->isAuto()) */)
@@ -3874,10 +3888,10 @@ OMR::Node::createStoresForVar(TR::SymbolReference * &nodeRef, TR::TreeTop *inser
       if (isInternalPointer)
          {
          TR::AutomaticSymbol *pinningArray = NULL;
-         if (self()->getOpCode().isArrayRef())
+         if (self()->getOpCode().isArrayRef() || self()->isDataAddrPointer())
             {
             child = self()->getFirstChild();
-            if (child->isInternalPointer())
+            if (child->isInternalPointer() && !child->isDataAddrPointer())
                pinningArray = child->getPinningArrayPointer();
             else
                {
@@ -5047,9 +5061,16 @@ OMR::Node::hasArrayStride()
    }
 
 bool
+OMR::Node::supportsPinningArrayPointerInNodeExtension()
+   {
+   return self()->isDataAddrPointer();
+   }
+
+bool
 OMR::Node::hasPinningArrayPointer()
    {
-   return self()->getOpCode().hasPinningArrayPointer();
+   // TODO: update this to check number of extension available children spots
+   return self()->getOpCode().hasPinningArrayPointer() || self()->supportsPinningArrayPointerInNodeExtension();
    }
 
 bool
@@ -5189,16 +5210,28 @@ OMR::Node::setArrayStride(int32_t s)
 TR::AutomaticSymbol*
 OMR::Node::getPinningArrayPointer()
    {
-   TR_ASSERT(self()->hasPinningArrayPointer(), "attempting to access _pinningArrayPointer field for node %s %p that does not have it", self()->getOpCode().getName(), this);
-   return _unionPropertyA._pinningArrayPointer;
+   TR_ASSERT(self()->hasPinningArrayPointer() || _unionBase._extension.getNumElems() >= 6, "attempting to access _pinningArrayPointer field for node %s %p that does not support it", self()->getOpCode().getName(), this);
+
+   if (self()->getOpCode().hasPinningArrayPointer())
+      return _unionPropertyA._pinningArrayPointer;
+
+   return _unionBase._extension.getExtensionPtr()->getElem<TR::AutomaticSymbol *>(5);
    }
 
 TR::AutomaticSymbol*
 OMR::Node::setPinningArrayPointer(TR::AutomaticSymbol *s)
    {
    s->setPinningArrayPointer();
-   TR_ASSERT(self()->hasPinningArrayPointer(), "attempting to access _pinningArrayPointer field for node %s %p that does not have it", self()->getOpCode().getName(), this);
-   return (_unionPropertyA._pinningArrayPointer = s);
+   TR_ASSERT(self()->hasPinningArrayPointer(), "attempting to access _pinningArrayPointer field for node %s %p that does not support it", self()->getOpCode().getName(), this);
+
+   if (self()->getOpCode().hasPinningArrayPointer())
+      return _unionPropertyA._pinningArrayPointer = s;
+
+   int extensionElemNum = _unionBase._extension.getNumElems();
+   if (extensionElemNum < 6)
+      self()->addExtensionElements(6 - extensionElemNum);
+
+   return _unionBase._extension.getExtensionPtr()->setElem<TR::AutomaticSymbol *>(5, s);
    }
 
 TR::DataType
@@ -5885,14 +5918,14 @@ OMR::Node::chkCompressionSequence()
 bool
 OMR::Node::isInternalPointer()
    {
-   return _flags.testAny(internalPointer) && (self()->getOpCode().hasPinningArrayPointer() || self()->getOpCode().isArrayRef());
+   return _flags.testAny(internalPointer) && (self()->hasPinningArrayPointer() || self()->getOpCode().isArrayRef());
    }
 
 void
 OMR::Node::setIsInternalPointer(bool v)
    {
    TR::Compilation *c = TR::comp();
-   TR_ASSERT(self()->getOpCode().hasPinningArrayPointer() || self()->getOpCode().isArrayRef(),
+   TR_ASSERT(self()->hasPinningArrayPointer() || self()->getOpCode().isArrayRef(),
              "Opcode must be one that can have a pinningArrayPointer or must be an array reference");
    if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting internalPointer flag on node %p to %d\n", self(), v))
       _flags.set(internalPointer, v);
