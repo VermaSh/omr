@@ -2601,6 +2601,7 @@ OMR::Options::jitPreProcess()
    _disabledOptimizations[IVTypeTransformation] = true;
    _disabledOptimizations[basicBlockHoisting] = true;
 
+   self()->setOption(TR_DisableUnsafe);
    if (TR::Compiler->om.isOffHeapAllocationEnabled())
       {
       // sverma: disable opts known to be broken for off heap
