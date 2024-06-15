@@ -2142,7 +2142,7 @@ TR::Node *generateArrayAddressTree(
             array = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp, offNode, stride, elementSize, false);
             }
          }
-      array = TR::TransformUtil::generateArrayElementAddressTrees(comp, objNode, array);
+      array = TR::TransformUtil::generateArrayElementAddressTrees(comp, objNode, false, array);
       array->setIsInternalPointer(true);
       return array;
       }
@@ -2478,8 +2478,8 @@ void OMR::ValuePropagation::generateArrayTranslateNode(TR::TreeTop *callTree,TR:
          arrayTranslateNode->setSourceIsByteArrayTranslate(true);
          arrayTranslateNode->setTargetIsByteArrayTranslate(false);
          }
-      src = TR::TransformUtil::generateArrayElementAddressTrees(comp(), srcObj, srcOff);
-      dst = TR::TransformUtil::generateArrayElementAddressTrees(comp(), dstObj, dstOff);
+      src = TR::TransformUtil::generateArrayElementAddressTrees(comp(), srcObj, false, srcOff);
+      dst = TR::TransformUtil::generateArrayElementAddressTrees(comp(), dstObj, false, dstOff);
       }
    else
 #endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */

@@ -226,7 +226,10 @@ class OMR_EXTENSIBLE TransformUtil
    static TR::Node *generateArrayElementAddressTrees(
       TR::Compilation *comp,
       TR::Node *arrayNode,
+      bool createLoadForArrayNode = false,
       TR::Node *offsetNode = NULL);
+
+   static TR::Node *createLoad(TR::Node *node);
 
    /**
     * \brief

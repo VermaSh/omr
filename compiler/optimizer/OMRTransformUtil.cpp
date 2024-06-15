@@ -454,10 +454,19 @@ OMR::TransformUtil::generateDataAddrLoadTrees(TR::Compilation *comp, TR::Node *a
 #endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */
 
 TR::Node *
-OMR::TransformUtil::generateArrayElementAddressTrees(TR::Compilation *comp, TR::Node *arrayNode, TR::Node *offsetNode)
+OMR::TransformUtil::createLoad(TR::Node *node)
+   {
+   return baseNode->getOpCode().isStoreDirect() ? TR::Node::createLoad(baseNode, baseNode->getSymbolReference()) :
+                                                  baseNode->duplicateTree();
+   }
+
+TR::Node *
+OMR::TransformUtil::generateArrayElementAddressTrees(TR::Compilation *comp, TR::Node *arrayNode, bool createLoadForArrayNode, TR::Node *offsetNode)
    {
    TR::Node *arrayAddressNode = NULL;
    TR::Node *totalOffsetNode = NULL;
+
+   TR::Node *baseNode = createLoadForArrayNode : createLoad(arrayNode) ? arrayNode;
 
    TR_ASSERT_FATAL_WITH_NODE(arrayNode,
       !TR::Compiler->om.canGenerateArraylets(),
@@ -478,14 +487,14 @@ OMR::TransformUtil::generateArrayElementAddressTrees(TR::Compilation *comp, TR::
       totalOffsetNode = TR::Node::lconst(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
       if (offsetNode)
          totalOffsetNode = TR::Node::create(TR::ladd, 2, offsetNode, totalOffsetNode);
-      arrayAddressNode = TR::Node::create(TR::aladd, 2, arrayNode, totalOffsetNode);
+      arrayAddressNode = TR::Node::create(TR::aladd, 2, baseNode, totalOffsetNode);
       }
    else
       {
       totalOffsetNode = TR::Node::iconst(static_cast<int32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes()));
       if (offsetNode)
          totalOffsetNode = TR::Node::create(TR::iadd, 2, offsetNode, totalOffsetNode);
-      arrayAddressNode = TR::Node::create(TR::aiadd, 2, arrayNode, totalOffsetNode);
+      arrayAddressNode = TR::Node::create(TR::aiadd, 2, baseNode, totalOffsetNode);
       }
 
    return arrayAddressNode;
