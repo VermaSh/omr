@@ -466,7 +466,7 @@ OMR::TransformUtil::generateArrayElementAddressTrees(TR::Compilation *comp, TR::
    TR::Node *arrayAddressNode = NULL;
    TR::Node *totalOffsetNode = NULL;
 
-   TR::Node *baseNode = createLoadForArrayNode : createLoad(arrayNode) ? arrayNode;
+   TR::Node *baseNode = createLoadForArrayNode ? createLoad(arrayNode) : arrayNode;
 
    TR_ASSERT_FATAL_WITH_NODE(arrayNode,
       !TR::Compiler->om.canGenerateArraylets(),
