@@ -456,8 +456,8 @@ OMR::TransformUtil::generateDataAddrLoadTrees(TR::Compilation *comp, TR::Node *a
 TR::Node *
 OMR::TransformUtil::createLoad(TR::Node *node)
    {
-   return baseNode->getOpCode().isStoreDirect() ? TR::Node::createLoad(baseNode, baseNode->getSymbolReference()) :
-                                                  baseNode->duplicateTree();
+   return node->getOpCode().isStoreDirect() ? TR::Node::createLoad(node, node->getSymbolReference()) :
+                                                  node->duplicateTree();
    }
 
 TR::Node *
