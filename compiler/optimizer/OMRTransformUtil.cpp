@@ -454,28 +454,20 @@ OMR::TransformUtil::generateDataAddrLoadTrees(TR::Compilation *comp, TR::Node *a
 #endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */
 
 TR::Node *
-OMR::TransformUtil::createLoad(TR::Node *node)
-   {
-   return node->getOpCode().isStoreDirect() ? TR::Node::createLoad(node, node->getSymbolReference()) :
-                                                  node->duplicateTree();
-   }
-
-TR::Node *
-OMR::TransformUtil::generateArrayElementAddressTrees(TR::Compilation *comp, TR::Node *arrayNode, bool createLoadForArrayNode, TR::Node *offsetNode)
+OMR::TransformUtil::generateArrayElementAddressTrees(TR::Compilation *comp, TR::Node *arrayNode, TR::Node *offsetNode)
    {
    TR::Node *arrayAddressNode = NULL;
    TR::Node *totalOffsetNode = NULL;
+   TR::Node *baseNode = arrayNode;
 
-   TR::Node *baseNode = createLoadForArrayNode ? createLoad(arrayNode) : arrayNode;
-
-   TR_ASSERT_FATAL_WITH_NODE(arrayNode,
+   TR_ASSERT_FATAL_WITH_NODE(baseNode,
       !TR::Compiler->om.canGenerateArraylets(),
       "This helper shouldn't be called if arraylets are enabled.\n");
 
 #if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
    if (TR::Compiler->om.isOffHeapAllocationEnabled())
       {
-      arrayAddressNode = generateDataAddrLoadTrees(comp, arrayNode);
+      arrayAddressNode = generateDataAddrLoadTrees(comp, baseNode);
       if (offsetNode)
          arrayAddressNode = TR::Node::create(TR::aladd, 2, arrayAddressNode, offsetNode);
       }
