@@ -458,16 +458,15 @@ OMR::TransformUtil::generateArrayElementAddressTrees(TR::Compilation *comp, TR::
    {
    TR::Node *arrayAddressNode = NULL;
    TR::Node *totalOffsetNode = NULL;
-   TR::Node *baseNode = arrayNode;
 
-   TR_ASSERT_FATAL_WITH_NODE(baseNode,
+   TR_ASSERT_FATAL_WITH_NODE(arrayNode,
       !TR::Compiler->om.canGenerateArraylets(),
       "This helper shouldn't be called if arraylets are enabled.\n");
 
 #if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
    if (TR::Compiler->om.isOffHeapAllocationEnabled())
       {
-      arrayAddressNode = generateDataAddrLoadTrees(comp, baseNode);
+      arrayAddressNode = generateDataAddrLoadTrees(comp, arrayNode);
       if (offsetNode)
          arrayAddressNode = TR::Node::create(TR::aladd, 2, arrayAddressNode, offsetNode);
       }
@@ -479,14 +478,14 @@ OMR::TransformUtil::generateArrayElementAddressTrees(TR::Compilation *comp, TR::
       totalOffsetNode = TR::Node::lconst(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
       if (offsetNode)
          totalOffsetNode = TR::Node::create(TR::ladd, 2, offsetNode, totalOffsetNode);
-      arrayAddressNode = TR::Node::create(TR::aladd, 2, baseNode, totalOffsetNode);
+      arrayAddressNode = TR::Node::create(TR::aladd, 2, arrayNode, totalOffsetNode);
       }
    else
       {
       totalOffsetNode = TR::Node::iconst(static_cast<int32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes()));
       if (offsetNode)
          totalOffsetNode = TR::Node::create(TR::iadd, 2, offsetNode, totalOffsetNode);
-      arrayAddressNode = TR::Node::create(TR::aiadd, 2, baseNode, totalOffsetNode);
+      arrayAddressNode = TR::Node::create(TR::aiadd, 2, arrayNode, totalOffsetNode);
       }
 
    return arrayAddressNode;
