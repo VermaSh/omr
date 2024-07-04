@@ -501,8 +501,10 @@ OMR::TransformUtil::generateFirstArrayElementAddressTrees(TR::Compilation *comp,
 TR::Node *
 OMR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(TR::Compilation *comp, TR::Node *indexNode, TR::Node *elementSizeNode, int32_t elementSize, bool useShiftOpCode)
    {
-   TR::Node *offsetNode = indexNode;
+   TR::Node *offsetNode = indexNode->createLongIfNeeded();
    TR::Node *strideNode = elementSizeNode;
+   if (strideNode)
+      strideNode = strideNode->createLongIfNeeded();
 
    if (strideNode != NULL || elementSize > 1)
       {
