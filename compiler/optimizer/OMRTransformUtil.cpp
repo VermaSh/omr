@@ -534,14 +534,16 @@ OMR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(TR::Compilatio
       indexNode->getDataType().isIntegral(),
       "indexNode must be integeral data type.\n");
 
-   TR_ASSERT_FATAL_WITH_NODE(indexNode,
-      elementSizeNode != NULL && elementSizeNode->getDataType().isIntegral(),
-      "elementSizeNode must be integeral data type.\n");
-
    TR::Node *offsetNode = indexNode->createLongIfNeeded();
-   TR::Node *strideNode = elementSizeNode;
-   if (strideNode)
-      strideNode = strideNode->createLongIfNeeded();
+   TR::Node *strideNode = NULL;
+   if (elementSizeNode)
+      {
+      TR_ASSERT_FATAL_WITH_NODE(indexNode,
+          elementSizeNode->getDataType().isIntegral(),
+          "elementSizeNode must be integeral data type.\n");
+
+      strideNode = elementSizeNode->createLongIfNeeded();
+      }
 
    if (strideNode != NULL || elementSize > 1)
       {
