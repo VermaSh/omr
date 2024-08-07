@@ -1140,9 +1140,9 @@ static TR::SymbolReference * createSymRefForNode(TR::Compilation *comp, TR::Reso
       bool isInternalPointer = false;
       if ((value->hasPinningArrayPointer() &&
             value->computeIsInternalPointer()) ||
-               (value->getOpCode().isLoadVarDirect() &&
-                  value->getSymbolReference()->getSymbol()->isAuto() &&
-                  value->getSymbolReference()->getSymbol()->castToAutoSymbol()->isInternalPointer()))
+          (value->getOpCode().isLoadVarDirect() &&
+            value->getSymbolReference()->getSymbol()->isAuto() &&
+            value->getSymbolReference()->getSymbol()->castToAutoSymbol()->isInternalPointer()))
          isInternalPointer = true;
 
       if (value->isNotCollected() && dataType == TR::Address)
@@ -1183,8 +1183,8 @@ static TR::SymbolReference * createSymRefForNode(TR::Compilation *comp, TR::Reso
                TR::SymbolReference *valueChildSymRef = valueChild->getSymbolReference();
                if (valueChildSymRef != NULL &&
                    valueChildSymRef->getSymbol()->isAuto() &&
-                  (valueChild->getOpCode().isLoadVarDirect() ||
-                        (valueChild->getOpCode().isLoadReg() && valueChildSymRef->getSymbol()->castToAutoSymbol()->isInternalPointer())))
+                   (valueChild->getOpCode().isLoadVarDirect() ||
+                     (valueChild->getOpCode().isLoadReg() && valueChildSymRef->getSymbol()->castToAutoSymbol()->isInternalPointer())))
                   {
                   if (valueChildSymRef->getSymbol()->castToAutoSymbol()->isInternalPointer())
                      {

@@ -2327,8 +2327,8 @@ OMR::Node::isNotCollected()
  *    Return true if the node is an internal pointer, false otherwise.
  *
  * \note
- *    This query currently only works on opcodes that can have a pinning array pointer,
- *    i.e. aiadd, aladd. Suppport for other opcodes can be added if necessary.
+ *    A node can be an internal pointer if the opcode can have a pinning array pointer
+ *    or if it uses node extensions to store the pinning array pointer.
  */
 bool
 OMR::Node::computeIsInternalPointer()
