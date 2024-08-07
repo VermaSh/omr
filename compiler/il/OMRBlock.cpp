@@ -1125,6 +1125,7 @@ static void gatherUnavailableRegisters(TR::Compilation *comp, TR::Node *regDeps,
  */
 static TR::SymbolReference * createSymRefForNode(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, TR::Node *value, TR::TreeTop *insertBefore)
    {
+   traceMsg(comp, "Entering createSymRefForNode with value node: %p\n", value);
    TR::DataType dataType = value->getDataType();
    TR::SymbolReference *symRef = NULL;
    if (value->isInternalPointer() && value->getPinningArrayPointer())
@@ -1134,6 +1135,8 @@ static TR::SymbolReference * createSymRefForNode(TR::Compilation *comp, TR::Reso
       }
    else
       {
+      traceMsg(comp, "createSymRefForNode: Entering else block with node(%p)\n", value);
+
       bool isInternalPointer = false;
       if ((value->hasPinningArrayPointer() &&
             value->computeIsInternalPointer()) ||
@@ -1215,6 +1218,7 @@ static TR::SymbolReference * createSymRefForNode(TR::Compilation *comp, TR::Reso
          symRef->getSymbol()->castToInternalPointerAutoSymbol()->setPinningArrayPointer(pinningArray);
          if (value->isInternalPointer() && pinningArray)
             {
+            traceMsg(comp, "createSymRefForNode: About to call setPinningArrayPointer on node: %p with automatic symbol: %p \n", value, pinningArray);
             value->setPinningArrayPointer(pinningArray);
             }
          }
