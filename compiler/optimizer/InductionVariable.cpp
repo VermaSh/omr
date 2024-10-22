@@ -926,22 +926,9 @@ int32_t TR_LoopStrider::detectCanonicalizedPredictableLoops(TR_Structure *loopSt
                traceMsg(comp(), "Found an reassociated induction var chance in %s\n", comp()->signature());
 
             TR::SymbolReference *origAuto = symRefTab->getSymRef(j);
-
-            TR::Node *arrayRefNode;
-            int32_t hdrSize = (int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-            if (usingAladd)
-               {
-               TR::Node *constantNode = TR::Node::create(byteCodeInfoNode, TR::lconst);
-               //constantNode->setLongInt(16);
-               constantNode->setLongInt((int64_t)hdrSize);
-               arrayRefNode = TR::Node::create(TR::aladd, 2,
-                     TR::Node::createWithSymRef(byteCodeInfoNode,
-                           TR::aload, 0, origAuto), constantNode);
-               }
-            else
-               arrayRefNode = TR::Node::create(TR::aiadd, 2,
-                     TR::Node::createWithSymRef(byteCodeInfoNode, TR::aload, 0, origAuto),
-                     TR::Node::create(byteCodeInfoNode, TR::iconst, 0, hdrSize));
+            // Generate new arrayRef node for reassociatedAuto
+            TR::Node *newArrayObjNode = TR::Node::createWithSymRef(byteCodeInfoNode, TR::aload, 0, origAuto);
+            TR::Node *arrayRefNode = TR::TransformUtil::generateArrayElementAddressTrees(comp(), newArrayObjNode, NULL, byteCodeInfoNode);
             arrayRefNode->setIsInternalPointer(true);
 
             if (!origAuto->getSymbol()->isInternalPointer())
