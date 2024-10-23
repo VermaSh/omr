@@ -71,6 +71,7 @@
 #include "optimizer/LoopCanonicalizer.hpp"
 #include "optimizer/VPConstraint.hpp"
 #include "ras/Debug.hpp"
+#include "optimizer/TransformUtil.hpp"
 
 #define OPT_DETAILS "O^O INDUCTION VARIABLE ANALYSIS: "
 
