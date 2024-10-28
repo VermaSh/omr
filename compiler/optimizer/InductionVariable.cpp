@@ -3435,15 +3435,16 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
 
 
       if ((isConst ||
-            (node->getOpCode().hasSymbolReference() &&
-               node->getOpCode().isLoadVar() &&
-               //node->getSymbolReference()->getSymbol()->isAuto() &&
-               node->getSymbolReference()->getSymbol()->isAutoOrParm() &&
-               _neverWritten->get(node->getSymbolReference()->getReferenceNumber()))) &&
-         (!_registersScarce || (originalNode->getReferenceCount() > 1)) &&
-         comp()->getSymRefTab()->getNumInternalPointers() < maxInternalPointers() &&
-         (!comp()->cg()->canBeAffectedByStoreTagStalls() || _numInternalPointerOrPinningArrayTempsInitialized < MAX_INTERNAL_POINTER_AUTOS_INITIALIZED) &&
-         performTransformation(comp(), "%s Replacing invariant internal pointer %p based on symRef #%d\n", OPT_DETAILS, node, internalPointerSymbol))
+           (node->getOpCode().hasSymbolReference() &&
+            node->getOpCode().isLoadVar() &&
+            //node->getSymbolReference()->getSymbol()->isAuto() &&
+            node->getSymbolReference()->getSymbol()->isAutoOrParm() &&
+            _neverWritten->get(node->getSymbolReference()->getReferenceNumber()))) &&
+           (!_registersScarce || (originalNode->getReferenceCount() > 1)) &&
+           (comp()->getSymRefTab()->getNumInternalPointers() < maxInternalPointers()) &&
+           (!comp()->cg()->canBeAffectedByStoreTagStalls() ||
+               _numInternalPointerOrPinningArrayTempsInitialized < MAX_INTERNAL_POINTER_AUTOS_INITIALIZED) &&
+           performTransformation(comp(), "%s Replacing invariant internal pointer %p based on symRef #%d\n", OPT_DETAILS, node, internalPointerSymbol))
          {
          TR::SymbolReference *internalPointerSymRef = NULL;
          auto symRefPairSearchResult = _hoistedAutos->find(originalInternalPointerSymbol);
@@ -3572,10 +3573,12 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
          int32_t hdrSize = (int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
          if ((isInternalPointer &&
               (comp()->getSymRefTab()->getNumInternalPointers() < maxInternalPointers()) &&
-              ((isAdd && (constValue == hdrSize)) || (!isAdd && constValue == -hdrSize))) &&
-            (!_registersScarce || (node->getReferenceCount() > 1) || _reassociatedNodes.find(node)) &&
-            (!comp()->cg()->canBeAffectedByStoreTagStalls() || _numInternalPointerOrPinningArrayTempsInitialized < MAX_INTERNAL_POINTER_AUTOS_INITIALIZED) &&
-            performTransformation(comp(), "%s Replacing reassociated internal pointer based on symRef #%d\n", OPT_DETAILS, internalPointerSymbol))
+              ((isAdd && (constValue == hdrSize)) ||
+               (!isAdd && constValue == -hdrSize))) &&
+              (!_registersScarce || (node->getReferenceCount() > 1) || _reassociatedNodes.find(node)) &&
+              (!comp()->cg()->canBeAffectedByStoreTagStalls() ||
+                  _numInternalPointerOrPinningArrayTempsInitialized < MAX_INTERNAL_POINTER_AUTOS_INITIALIZED) &&
+              performTransformation(comp(), "%s Replacing reassociated internal pointer based on symRef #%d\n", OPT_DETAILS, internalPointerSymbol))
             {
             if (_reassociatedAutos->find(originalInternalPointerSymbol) == _reassociatedAutos->end())
                {
@@ -3647,10 +3650,12 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
    if (TR::Compiler->om.isOffHeapAllocationEnabled() &&
       (node->getOpCodeValue() == TR::lmul || node->getOpCodeValue() == TR::lshl))
       {
-      if ((isInternalPointer && comp()->getSymRefTab()->getNumInternalPointers() < maxInternalPointers()) &&
-         (!_registersScarce || node->getReferenceCount() > 1 || _reassociatedNodes.find(node)) &&
-         (!comp()->cg()->canBeAffectedByStoreTagStalls() || _numInternalPointerOrPinningArrayTempsInitialized < MAX_INTERNAL_POINTER_AUTOS_INITIALIZED) &&
-         performTransformation(comp(), "%s Replacing reassociated internal pointer based on symRef #%d\n", OPT_DETAILS, internalPointerSymbol))
+      if ((isInternalPointer &&
+            (comp()->getSymRefTab()->getNumInternalPointers() < maxInternalPointers())) &&
+            (!_registersScarce || (node->getReferenceCount() > 1) || _reassociatedNodes.find(node)) &&
+            (!comp()->cg()->canBeAffectedByStoreTagStalls() ||
+               _numInternalPointerOrPinningArrayTempsInitialized < MAX_INTERNAL_POINTER_AUTOS_INITIALIZED) &&
+            performTransformation(comp(), "%s Replacing reassociated internal pointer based on symRef #%d\n", OPT_DETAILS, internalPointerSymbol))
          {
          if (_reassociatedAutos->find(originalInternalPointerSymbol) == _reassociatedAutos->end())
             {
