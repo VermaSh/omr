@@ -3386,7 +3386,9 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
    TR::Node *originalNode = NULL;
    TR::Node *pinningArrayNode = NULL;
    if (cg()->supportsInternalPointers() && reassociateAndHoistNonPacked() &&
-      node->isInternalPointer() && !node->isDataAddrPointer())
+      node->isInternalPointer() && !node->isDataAddrPointer() &&
+      ((TR::Compiler->om.isOffHeapAllocationEnabled() && node->getFirstChild()->isDataAddrPointer()) ||
+         (!TR::Compiler->om.isOffHeapAllocationEnabled() && !node->getFirstChild()->isInternalPointer())))
       {
       if (node->getFirstChild()->isDataAddrPointer())
          pinningArrayNode = node->getFirstChild()->getFirstChild();
