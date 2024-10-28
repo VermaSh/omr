@@ -3393,6 +3393,9 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
       else
          pinningArrayNode = node->getFirstChild();
 
+      traceMsg(comp(), "reassociateAndHoistComputations - 1: node: %p being examined\n", node);
+      traceMsg(comp(), "reassociateAndHoistComputations - 2: pinningArrayNode: %p\n", pinningArrayNode);
+
       if (pinningArrayNode->getOpCode().isLoadVar() &&
          pinningArrayNode->getSymbolReference()->getSymbol()->isAutoOrParm() &&
          _neverWritten->get(pinningArrayNode->getSymbolReference()->getReferenceNumber()))
