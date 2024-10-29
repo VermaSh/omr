@@ -3647,8 +3647,7 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
 #ifdef J9_PROJECT_SPECIFIC
    // For OffHeap runs, the array access trees don't include headerSize addition
    // Offset tree opcode is lmul/lshl to calculate offset from the index node.
-   if (TR::Compiler->om.isOffHeapAllocationEnabled() &&
-      (node->getOpCodeValue() == TR::lmul || node->getOpCodeValue() == TR::lshl))
+   if (TR::Compiler->om.isOffHeapAllocationEnabled() && originalNode->getFirstChild()->isDataAddrPointer())
       {
       if ((isInternalPointer &&
             (comp()->getSymRefTab()->getNumInternalPointers() < maxInternalPointers())) &&
