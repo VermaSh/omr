@@ -3702,21 +3702,10 @@ bool TR_LoopStrider::reassociateAndHoistComputations(TR::Block *loopInvariantBlo
 
          TR::SymbolReference *internalPointerSymRef = (*_reassociatedAutos)[originalInternalPointerSymbol];
          originalNode->getFirstChild()->recursivelyDecReferenceCount();
-         node->decReferenceCount();
-         _reassociatedNodes.add(node);
-
-         if (node->getReferenceCount() == 0)
-            {
-            node->getFirstChild()->decReferenceCount();
-            node->getSecondChild()->decReferenceCount();
-            }
 
          TR::Node *newLoad = TR::Node::createWithSymRef(node, TR::aload, 0, internalPointerSymRef);
          newLoad->setLocalIndex(~0);
          originalNode->setAndIncChild(0, newLoad);
-         originalNode->setAndIncChild(1, node);
-         // originalNode->setAndIncChild(1, node->getFirstChild());
-         reassociatedComputation = true;
          traceMsg(comp(), "originalNode: %p, newLoad node: %p\n", originalNode, newLoad);
          }
       }
