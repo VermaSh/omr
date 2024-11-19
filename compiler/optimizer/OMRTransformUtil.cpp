@@ -492,9 +492,9 @@ OMR::TransformUtil::generateArrayElementAddressTrees(TR::Compilation *comp, TR::
    }
 
 TR::Node *
-OMR::TransformUtil::generateFirstArrayElementAddressTrees(TR::Compilation *comp, TR::Node *arrayObject)
+OMR::TransformUtil::generateFirstArrayElementAddressTrees(TR::Compilation *comp, TR::Node *arrayObject, TR::Node *originatingByteCodeNode)
    {
-   TR::Node *firstArrayElementNode = generateArrayElementAddressTrees(comp, arrayObject);
+   TR::Node *firstArrayElementNode = generateArrayElementAddressTrees(comp, arrayObject, NULL, originatingByteCodeNode);
    return firstArrayElementNode;
    }
 

@@ -219,6 +219,9 @@ class OMR_EXTENSIBLE TransformUtil
     * \param offsetNode
     *    The offset node (in bytes)
     *
+    * \param originatingByteCodeNode
+    *    The originating byte code node
+    *
     * \return
     *    IL to access array element at offset provided by offsetNode or
     *    first array element if no offset node is provided
@@ -239,10 +242,13 @@ class OMR_EXTENSIBLE TransformUtil
     * \param arrayObject
     *    The array object node
     *
+    * \param originatingByteCodeNode
+    *    The originating byte code node
+    *
     * \return
     *    IL for accessing first array element
     */
-   static TR::Node *generateFirstArrayElementAddressTrees(TR::Compilation *comp, TR::Node *arrayObject);
+   static TR::Node *generateFirstArrayElementAddressTrees(TR::Compilation *comp, TR::Node *arrayObject, TR::Node *originatingByteCodeNode = NULL);
 
    /**
     * \brief
