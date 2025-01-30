@@ -125,6 +125,7 @@ typedef struct OMR_VM {
 	uintptr_t _arrayletLeafLogSize;
 	uintptr_t _compressedPointersShift;
 	uintptr_t _objectAlignmentInBytes;
+	uintptr_t _minimumObjectSizeInBytes;
 	uintptr_t _objectAlignmentShift;
 	void *_gcOmrVMExtensions;
 	struct OMR_VMConfiguration _configuration;
