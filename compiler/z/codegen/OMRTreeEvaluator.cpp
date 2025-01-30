@@ -3751,13 +3751,9 @@ generateS390ImmOp(TR::CodeGenerator * cg, TR::InstOpCode::Mnemonic memOp, TR::No
    }
 
 void
-updateReferenceNode(TR::CodeGenerator * cg, TR::Node * node, TR::Register * reg)
+updateReferenceNode(TR::Node * node, TR::Register * reg)
    {
    TR::Symbol * sym = node->getSymbolReference()->getSymbol();
-   TR::Compilation *comp = cg->comp();
-   traceMsg(comp, "Entering updateReferenceNode:\n");
-   traceMsg(comp, "Node: %p | sym->isCollectedReference(): %s | isAddressOfClassObject: %s \n", node, (sym->isCollectedReference() ? "true" : "false"), (!node->getSymbolReference()->getSymbol()->isAddressOfClassObject() ? "true" : "false"));
-   traceMsg(comp, "sym->isInternalPointer(): %s\n", (sym->isInternalPointer() ? "true" : "false"));
    if ((node->getOpCodeValue() == TR::aload || node->getOpCodeValue() == TR::aloadi) &&
         sym->isCollectedReference() &&
         !node->getSymbolReference()->getSymbol()->isAddressOfClassObject())
@@ -3774,10 +3770,8 @@ updateReferenceNode(TR::CodeGenerator * cg, TR::Node * node, TR::Register * reg)
       }
    else
       {
-      traceMsg(comp, "In top level else block\n");
       if (sym->isInternalPointer())
          {
-         traceMsg(comp, "In nested if block\n");
          reg->setContainsInternalPointer();
          reg->setPinningArrayPointer(sym->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
          }
@@ -5045,7 +5039,7 @@ generateS390CompareAndBranchOpsHelper(TR::Node * node, TR::CodeGenerator * cg, T
             generateRXInstruction(cg, (useLTG) ? TR::InstOpCode::LTG : TR::InstOpCode::LT, nonConstNode, testRegister, tempMR);
             }
 
-         updateReferenceNode(cg, nonConstNode, testRegister);
+         updateReferenceNode(nonConstNode, testRegister);
          nonConstNode->setRegister(testRegister);
          tempMR->stopUsingMemRefRegister(cg);
          }
@@ -7095,54 +7089,44 @@ aloadHelper(TR::Node * node, TR::CodeGenerator * cg, TR::MemoryReference * tempM
             && (node->getOpCodeValue() == TR::aloadi)
             && constNode->isClassUnloadingConst())
       {
-      traceMsg(comp, "aloadHelper: 2.entered constNode->isClassUnloadingConst() block\n");
       uintptr_t value = constNode->getAddress();
       TR::Instruction *unloadableConstInstr = NULL;
       if (cg->canUseRelativeLongInstructions(value))
          {
-         traceMsg(comp, "aloadHelper: 2.a Entered if block\n");
          unloadableConstInstr = generateRILInstruction(cg, TR::InstOpCode::LARL, node, tempReg, reinterpret_cast<void*>(value));
          }
       else
          {
-         traceMsg(comp, "aloadHelper: 2.b Entered else block\n");
          unloadableConstInstr = genLoadAddressConstantInSnippet(cg, node, value, tempReg, NULL, NULL, NULL, true);
          }
       TR_OpaqueClassBlock* unloadableClass = NULL;
       if (constNode->isMethodPointerConstant())
          {
-         traceMsg(comp, "aloadHelper: 2.c Entered constNode->isMethodPointerConstant()\n");
          unloadableClass = (TR_OpaqueClassBlock *) cg->fe()->createResolvedMethod(cg->trMemory(), (TR_OpaqueMethodBlock *) value,
             comp->getCurrentMethod())->classOfMethod();
          if (cg->fe()->isUnloadAssumptionRequired(unloadableClass, comp->getCurrentMethod())
                  || cg->profiledPointersRequireRelocation())
             {
-            traceMsg(comp, "aloadHelper: 2.c.1 Entered\n");
             comp->getStaticMethodPICSites()->push_front(unloadableConstInstr);
             }
          }
       else
          {
-         traceMsg(comp, "aloadHelper: 2.d Entered\n");
          unloadableClass = (TR_OpaqueClassBlock *) value;
          if (cg->fe()->isUnloadAssumptionRequired(unloadableClass, comp->getCurrentMethod()) ||
              cg->profiledPointersRequireRelocation())
             {
-            traceMsg(comp, "aloadHelper: 2.d.1 Entered\n");
             comp->getStaticPICSites()->push_front(unloadableConstInstr);
             }
          }
       }
    else if(relativeLongLoadHelper(cg, node, tempReg))
       {
-      traceMsg(comp, "aloadHelper: 2. relativeLongLoadHelper(cg, node, tempReg)\n");
       }
    else
       {
-      traceMsg(comp, "aloadHelper: 3. else block\n");
-      if (tempMR == NULL) // will most likely be null for our case
+      if (tempMR == NULL)
          {
-         traceMsg(comp, "aloadHelper: 3.a. tempMR was null\n");
          tempMR = TR::MemoryReference::create(cg, node);
          TR::TreeEvaluator::checkAndSetMemRefDataSnippetRelocationType(node, cg, tempMR);
          }
@@ -7151,7 +7135,6 @@ aloadHelper(TR::Node * node, TR::CodeGenerator * cg, TR::MemoryReference * tempM
       //
       if (cg->isCompressedClassPointerOfObjectHeader(node) && !dynLitPoolLoad)
          {
-         traceMsg(comp, "aloadHelper: 3.b. tempMR was null\n");
          if (node->getSymbolReference() == comp->getSymRefTab()->findVftSymbolRef())
             TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, tempReg, tempMR, NULL);
          else
@@ -7161,20 +7144,17 @@ aloadHelper(TR::Node * node, TR::CodeGenerator * cg, TR::MemoryReference * tempM
          {
          if (node->isLoadAndTest())
             {
-            traceMsg(comp, "aloadHelper: 3.c. tempMR was null\n");
             TR::InstOpCode::Mnemonic opCode = TR::InstOpCode::getLoadTestOpCode();
 
             TR_ASSERT_FATAL(!node->isSignExtendedAtSource(), "Cannot force sign extension at source for address loads\n");
 
             if (node->isZeroExtendedTo64BitAtSource())
                {
-               traceMsg(comp, "aloadHelper: 3.c.1 tempMR was null\n");
                generateRXInstruction(cg, TR::InstOpCode::LLGF, node, tempReg, tempMR);
                generateRRInstruction(cg, TR::InstOpCode::LTGR, node, tempReg, tempReg);
                }
             else
                {
-               traceMsg(comp, "aloadHelper: 3.c.2 tempMR was null\n");
                generateRXInstruction(cg, opCode, node, tempReg, tempMR);
                }
 
@@ -7186,10 +7166,8 @@ aloadHelper(TR::Node * node, TR::CodeGenerator * cg, TR::MemoryReference * tempM
             }
          else
             {
-            traceMsg(comp, "aloadHelper: 3.d\n");
             if (cg->getConditionalMovesEvaluationMode())
                {
-               traceMsg(comp, "aloadHelper: 3.d.1\n");
                generateRSInstruction(cg, TR::InstOpCode::getLoadOpCode() == TR::InstOpCode::L ? TR::InstOpCode::LOC : TR::InstOpCode::LOCG, node, tempReg, cg->getRCondMoveBranchOpCond(), tempMR);
 
 #ifdef J9_PROJECT_SPECIFIC
@@ -7200,7 +7178,6 @@ aloadHelper(TR::Node * node, TR::CodeGenerator * cg, TR::MemoryReference * tempM
                }
             else
                {
-               traceMsg(comp, "aloadHelper: 3.d.2\n");
                if (node->getSymbolReference() == comp->getSymRefTab()->findVftSymbolRef())
                   TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, tempReg, tempMR, NULL);
                else if (node->getSymbol()->getSize() == 4 && node->isExtendedTo64BitAtSource())
@@ -7211,8 +7188,7 @@ aloadHelper(TR::Node * node, TR::CodeGenerator * cg, TR::MemoryReference * tempM
             }
          }
 
-      traceMsg(comp, "node (%p): About to enter updateReferenceNode\n", node);
-      updateReferenceNode(cg, node, tempReg);
+      updateReferenceNode(node, tempReg);
       }
 
    node->setRegister(tempReg);
@@ -7889,7 +7865,6 @@ OMR::Z::TreeEvaluator::aiaddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 TR::Register *
 OMR::Z::TreeEvaluator::aladdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   traceMsg(cg->comp(), "Entering aladd evaluator with %p\n", node);
    return OMR::Z::TreeEvaluator::axaddEvaluator(node, cg);
    }
 

@@ -3842,7 +3842,7 @@ OMR::Z::CodeGenerator::buildRegisterMapForInstruction(TR_GCStackMap * map)
                atlas->addPinningArrayPtrForInternalPtrReg(virtReg->getPinningArrayPointer());
                }
             else if (virtReg->containsCollectedReference())
-               { // Do we enter here for our register?
+               {
                map->setRegisterBits(self()->registerBitMask(i));
                }
             }
