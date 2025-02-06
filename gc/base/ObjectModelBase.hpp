@@ -69,7 +69,6 @@ protected:
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	uintptr_t _objectAlignmentInBytes; 	/**< cached copy of heap object alignment factor, in bytes */
 	uintptr_t _objectAlignmentShift; 	/**< cached copy of heap object alignment shift, must be log2(_objectAlignmentInBytes)  */
-	uintptr_t _minimumObjectSizeInBytes; 	/**< cached copy of minimum heap object size, in bytes */
 
 public:
 
@@ -324,10 +323,8 @@ public:
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 		_objectAlignmentInBytes = OMR_MAX((uintptr_t)1 << omrVM->_compressedPointersShift, OMR_MINIMUM_OBJECT_ALIGNMENT);
 		_objectAlignmentShift = OMR_MAX(omrVM->_compressedPointersShift, OMR_MINIMUM_OBJECT_ALIGNMENT_SHIFT);
-		_minimumObjectSizeInBytes = OMR_MAX(omrVM->_minimumObjectSizeInBytes, OMR_MINIMUM_OBJECT_SIZE);
 
 		omrVM->_objectAlignmentInBytes = _objectAlignmentInBytes;
-		omrVM->_minimumObjectSizeInBytes = _minimumObjectSizeInBytes;
 		omrVM->_objectAlignmentShift = _objectAlignmentShift;
 	}
 
