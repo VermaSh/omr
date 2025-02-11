@@ -449,15 +449,6 @@ OMR::TransformUtil::generateDataAddrLoadTrees(TR::Compilation *comp, TR::Node *a
    TR::Node *dataAddrField = TR::Node::createWithSymRef(TR::aloadi, 1, arrayObject, 0, dataAddrFieldOffset);
    dataAddrField->setIsInternalPointer(true);
 
-   traceMsg(comp, "entered with : %p\n", arrayObject);
-   traceMsg(comp, "isAutoOrParm() : %p\n", arrayObject->getSymbol()->isAutoOrParm());
-
-   TR::Symbol *sym = arrayObject->getSymbol();
-   traceMsg(comp, "  Does node(%p) have auto symbol: %d\n", arrayObject, sym->getOffset());
-   traceMsg(comp, "  sym->isParm(): %d\n", sym->isParm());
-   traceMsg(comp, "  sym->isAuto(): %d\n", sym->isAuto());
-   traceMsg(comp, "  sym->isShadow(): %d\n", sym->isShadow());
-   traceMsg(comp, "  sym->isInternalPointerAuto(): %d\n", sym->isInternalPointerAuto());
    return dataAddrField;
    }
 #endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */

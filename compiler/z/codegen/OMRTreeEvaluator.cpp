@@ -7057,8 +7057,6 @@ aloadHelper(TR::Node * node, TR::CodeGenerator * cg, TR::MemoryReference * tempM
    {
    TR::Compilation *comp = cg->comp();
 
-   traceMsg(comp, "node(%p)->getOpCodeValue(): %s\n", node, (node->getOpCodeValue() == TR::aload || node->getOpCodeValue() == TR::aloadi) ? "true" : "false");
-
    TR::Register * tempReg = NULL; // msf - ia32 does not check for not internal pointer...
 
    // Evaluation of aloadi cannot be skipped if any unevaluated node in its subtree contains a symbol reference
@@ -7191,16 +7189,6 @@ aloadHelper(TR::Node * node, TR::CodeGenerator * cg, TR::MemoryReference * tempM
          }
 
       updateReferenceNode(node, tempReg);
-      TR::Symbol * sym = node->getSymbolReference()->getSymbol();
-      traceMsg(comp, "  sym->isCollectedReference(): %s\n", (sym->isCollectedReference()) ? "true" : "false");
-      traceMsg(comp, "  !node->getSymbolReference()->getSymbol()->isAddressOfClassObject(): %s\n", (!sym->isAddressOfClassObject()) ? "true" : "false");
-      traceMsg(comp, "  !sym->isInternalPointer(): %s\n", (sym->isInternalPointer()) ? "true" : "false");
-
-      traceMsg(comp, "  Does node have auto symbol: %d\n", sym->getOffset());
-      traceMsg(comp, "  sym->isParm(): %d\n", sym->isParm());
-      traceMsg(comp, "  sym->isAuto(): %d\n", sym->isAuto());
-      traceMsg(comp, "  sym->isShadow(): %d\n", sym->isShadow());
-      traceMsg(comp, "  sym->isInternalPointerAuto(): %d\n", sym->isInternalPointerAuto());
       }
 
    node->setRegister(tempReg);
