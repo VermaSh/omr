@@ -5114,7 +5114,7 @@ OMR::Options::setVerboseBitsHelper(const char *option, VerboseOptionFlagArray *v
                {
                verboseOptionFlags->set(i);
                foundMatch = true;
-               if (i == TR_VerbosePerformance)  // If verbose={performance} is specified, I really want to see the options
+               if (i == TR_VerbosePerformance)  // If verbose={compilePerformance} is specified, I really want to see the options
                    verboseOptionFlags->set(TR_VerboseOptions);
                }
             }
