@@ -184,6 +184,10 @@ int omrfree_memory_above_bar(void *address, const char *ttkn);
 void *omrallocate_4K_pages_above_bar(int numMBSegments, const char *ttkn);
 
 /* omrvmem_support_above_bar.s */
+#pragma linkage(omrallocate_4K_pages_guarded_above_bar,OS_NOSTACK)
+void *omrallocate_4K_pages_guarded_above_bar(int numMBSegments, const char *ttkn);
+
+/* omrvmem_support_above_bar.s */
 #pragma linkage(omrallocate_4K_pages_in_userExtendedPrivateArea,OS_NOSTACK)
 void * omrallocate_4K_pages_in_userExtendedPrivateArea(int numMBSegments, int userExtendedPrivateAreaMemoryType, const char * ttkn);
 

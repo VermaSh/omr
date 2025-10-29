@@ -287,6 +287,35 @@ void * omrallocate_4K_pages_above_bar(int *numMBSegments, const char * ttkn) {
 	return (void *)origin;
 }
 
+#pragma prolog(omrallocate_4K_pages_guarded_above_bar,"MYPROLOG")
+#pragma epilog(omrallocate_4K_pages_guarded_above_bar,"MYEPILOG")
+
+__asm(" IARV64 PLISTVER=MAX,MF=(L,RGETSTOR)":"DS"(rgetstor));
+
+void *omrallocate_4K_pages_guarded_above_bar(int numMBSegments, int guardNumMBSegments,const char *ttkn) {
+	long segments;
+	long guardSegments;
+	long origin;
+	int  iarv64_rc = 0;
+
+	__asm(" IARV64 PLISTVER=MAX,MF=(L,RGETSTOR)":"DS"(wgetstor));
+
+	segments = *numMBSegments;
+	guardSegments = *guardNumMBSegments;
+	wgetstor = rgetstor;
+
+	__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,"\
+			"GUARDSIZE=%5,GUARDLOC=HIGH,"\
+			"CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
+			"SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+			::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&guardSegments));
+
+	if (0 != iarv64_rc) {
+		return (void *)0;
+	}
+	return (void *)origin;
+}
+
 #pragma prolog(omrfree_memory_above_bar,"MYPROLOG")
 #pragma epilog(omrfree_memory_above_bar,"MYEPILOG")
 
