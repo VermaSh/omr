@@ -153,6 +153,61 @@ void * omrallocate_1M_pageable_pages_above_bar(int *numMBSegments, int *userExte
 	return (void *)origin;
 }
 
+#pragma prolog(omrallocate_1M_pageable_pages_guarded_above_bar,"MYPROLOG")
+#pragma epilog(omrallocate_1M_pageable_pages_guarded_above_bar,"MYEPILOG")
+
+__asm(" IARV64 PLISTVER=MAX,MF=(L,NGETSTOR)":"DS"(ngetstor));
+
+/*
+ * Allocate 1MB pageable guarded pages above 2GB bar using IARV64 system macro.
+ * Memory allocated is freed using omrfree_memory_above_bar().
+ *
+ * @params[in] numMBSegments Number of 1MB segments to be allocated
+ * @params[in] userExtendedPrivateAreaMemoryType capability of OS: 0 - general, 1 - 2G-32G range, 2 - 2G-64G range
+ *
+ * @return pointer to memory allocated, NULL on failure.
+ */
+void *omrallocate_1M_pageable_pages_guarded_above_bar(int numMBSegments, int userExtendedPrivateAreaMemoryType, const char *ttkn) {
+	long segments;
+	long origin;
+	long useMemoryType = *userExtendedPrivateAreaMemoryType;
+	int  iarv64_rc = 0;
+
+	__asm(" IARV64 PLISTVER=MAX,MF=(L,NGETSTOR)":"DS"(wgetstor));
+
+	segments = *numMBSegments;
+	wgetstor = ngetstor;
+
+	switch (useMemoryType) {
+	case ZOS64_VMEM_ABOVE_BAR_GENERAL:
+		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,"\
+				"GUARDSIZE=(%2),GUARDLOC=HIGH,"\
+				"PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
+				"ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+		break;
+	case ZOS64_VMEM_2_TO_32G:
+		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO32G=YES,"\
+				"GUARDSIZE=(%2),GUARDLOC=HIGH,"\
+				"PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
+				"ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+		break;
+	case ZOS64_VMEM_2_TO_64G:
+		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO64G=YES,"\
+				"GUARDSIZE=(%2),GUARDLOC=HIGH,"\
+				"PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
+				"ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+		break;
+	}
+
+	if (0 != iarv64_rc) {
+		return (void *)0;
+	}
+	return (void *)origin;
+}
+
 #pragma prolog(omrallocate_2G_pages,"MYPROLOG")
 #pragma epilog(omrallocate_2G_pages,"MYEPILOG")
 
@@ -253,6 +308,56 @@ void * omrallocate_4K_pages_in_userExtendedPrivateArea(int *numMBSegments, int *
 	return (void *)origin;
 }
 
+#pragma prolog(omrallocate_4K_pages_guarded_in_userExtendedPrivateArea,"MYPROLOG")
+#pragma epilog(omrallocate_4K_pages_guarded_in_userExtendedPrivateArea,"MYEPILOG")
+
+__asm(" IARV64 PLISTVER=MAX,MF=(L,RGETSTOR)":"DS"(rgetstor));
+
+/*
+ * Allocate 4KB pages guarded in 2G-32G range using IARV64 system macro.
+ * Memory allocated is freed using omrfree_memory_above_bar().
+ *
+ * @params[in] numMBSegments Number of 1MB segments to be allocated
+ * @params[in] userExtendedPrivateAreaMemoryType capability of OS: 0 - general, 1 - 2G-32G range, 2 - 2G-64G range
+ *
+ * @return pointer to memory allocated, NULL on failure.
+ */
+void *omrallocate_4K_pages_guarded_in_userExtendedPrivateArea(int numMBSegments, const char *ttkn) {
+	long segments;
+	long origin;
+	long useMemoryType = *userExtendedPrivateAreaMemoryType;
+	int  iarv64_rc = 0;
+
+	__asm(" IARV64 PLISTVER=MAX,MF=(L,MGETSTOR)":"DS"(wgetstor));
+
+	segments = *numMBSegments;
+	wgetstor = mgetstor;
+
+	switch (useMemoryType) {
+	case ZOS64_VMEM_ABOVE_BAR_GENERAL:
+		break;
+	case ZOS64_VMEM_2_TO_32G:
+		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO32G=YES,"\
+				"GUARDSIZE=(%2),GUARDLOC=HIGH,"\
+				"CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
+				"SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+		break;
+	case ZOS64_VMEM_2_TO_64G:
+		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO64G=YES,"\
+				"GUARDSIZE=(%2),GUARDLOC=HIGH,"\
+				"CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
+				"SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
+				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
+		break;
+	}
+
+	if (0 != iarv64_rc) {
+		return (void *)0;
+	}
+	return (void *)origin;
+}
+
 #pragma prolog(omrallocate_4K_pages_above_bar,"MYPROLOG")
 #pragma epilog(omrallocate_4K_pages_above_bar,"MYEPILOG")
 
@@ -292,23 +397,21 @@ void * omrallocate_4K_pages_above_bar(int *numMBSegments, const char * ttkn) {
 
 __asm(" IARV64 PLISTVER=MAX,MF=(L,RGETSTOR)":"DS"(rgetstor));
 
-void *omrallocate_4K_pages_guarded_above_bar(int numMBSegments, int guardNumMBSegments,const char *ttkn) {
+void *omrallocate_4K_pages_guarded_above_bar(int numMBSegments, const char *ttkn) {
 	long segments;
-	long guardSegments;
 	long origin;
 	int  iarv64_rc = 0;
 
 	__asm(" IARV64 PLISTVER=MAX,MF=(L,RGETSTOR)":"DS"(wgetstor));
 
 	segments = *numMBSegments;
-	guardSegments = *guardNumMBSegments;
 	wgetstor = rgetstor;
 
 	__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,"\
-			"GUARDSIZE=%5,GUARDLOC=HIGH,"\
+			"GUARDSIZE=(%2),GUARDLOC=HIGH,"\
 			"CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
 			"SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
-			::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn),"r"(&guardSegments));
+			::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
 
 	if (0 != iarv64_rc) {
 		return (void *)0;
@@ -339,6 +442,67 @@ int omrfree_memory_above_bar(void *address, const char * ttkn){
 
 	__asm(" IARV64 REQUEST=DETACH,COND=YES,MEMOBJSTART=(%2),TTOKEN=(%3),RETCODE=%0,MF=(E,(%1))"\
 			::"m"(iarv64_rc),"r"(&wgetstor),"r"(&xmemobjstart),"r"(ttkn));
+	return iarv64_rc;
+}
+
+#pragma prolog(omrfree_change_guarded,"MYPROLOG")
+#pragma epilog(omrfree_change_guarded,"MYEPILOG")
+
+__asm(" IARV64 PLISTVER=MAX,MF=(L,PGETSTOR)":"DS"(pgetstor));
+
+/*
+ * Remove guard for memory allocated using IARV64 system macro.
+ *
+ * @params[in] address pointer to memory region to be freed
+  * @params[in] numMBSegments Number of 1MB segments to be allocated
+ *
+ * @return non-zero if memory is not freed successfully, 0 otherwise.
+ */
+int omrfree_remove_guard(void *address, int numMBSegments){
+	void * xmemobjstart;
+	int  iarv64_rc = 0;
+	long segments;
+
+	__asm(" IARV64 PLISTVER=MAX,MF=(L,PGETSTOR)":"DS"(wgetstor));
+
+	xmemobjstart = address;
+	wgetstor = pgetstor;
+	segments = *numMBSegments;
+
+	__asm(" IARV64 REQUEST=CHANGEGUARD,CONVERT=FROMGUARD,COND=YES,"\
+			"MEMOBJSTART=(%2),CONVERTSIZE=(%3),"\
+			"RETCODE=%0,MF=(E,(%1))"\
+			::"m"(iarv64_rc),"r"(&wgetstor),"r"(&xmemobjstart),"r"(&segments));
+	return iarv64_rc;
+}
+
+#pragma prolog(omrfree_add_guard,"MYPROLOG")
+#pragma epilog(omrfree_add_guard,"MYEPILOG")
+
+__asm(" IARV64 PLISTVER=MAX,MF=(L,PGETSTOR)":"DS"(pgetstor));
+
+/*
+ * Ass guard to memory allocated using IARV64 system macro.
+ *
+ * @params[in] address pointer to memory region to be freed
+ *
+ * @return non-zero if memory is not freed successfully, 0 otherwise.
+ */
+int omrfree_add_guard(void *address, int numMBSegments) {
+	void * xmemobjstart;
+	int  iarv64_rc = 0;
+	long segments;
+
+	__asm(" IARV64 PLISTVER=MAX,MF=(L,PGETSTOR)":"DS"(wgetstor));
+
+	xmemobjstart = address;
+	wgetstor = pgetstor;
+	segments = *numMBSegments;
+
+	__asm(" IARV64 REQUEST=CHANGEGUARD,CONVERT=TOGUARD,COND=YES,"\
+			"MEMOBJSTART=(%2),CONVERTSIZE=(%3),"\
+			"RETCODE=%0,MF=(E,(%1))"\
+			::"m"(iarv64_rc),"r"(&wgetstor),"r"(&xmemobjstart),"r"(&segments));
 	return iarv64_rc;
 }
 
