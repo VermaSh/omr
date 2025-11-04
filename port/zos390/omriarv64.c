@@ -167,7 +167,7 @@ __asm(" IARV64 PLISTVER=MAX,MF=(L,NGETSTOR)":"DS"(ngetstor));
  *
  * @return pointer to memory allocated, NULL on failure.
  */
-void *omrallocate_1M_pageable_pages_guarded_above_bar(int numMBSegments, int userExtendedPrivateAreaMemoryType, const char *ttkn) {
+void *omrallocate_1M_pageable_pages_guarded_above_bar(int *numMBSegments, int *userExtendedPrivateAreaMemoryType, const char *ttkn) {
 	long segments;
 	long origin;
 	long useMemoryType = *userExtendedPrivateAreaMemoryType;
@@ -322,7 +322,7 @@ __asm(" IARV64 PLISTVER=MAX,MF=(L,RGETSTOR)":"DS"(rgetstor));
  *
  * @return pointer to memory allocated, NULL on failure.
  */
-void *omrallocate_4K_pages_guarded_in_userExtendedPrivateArea(int numMBSegments, const char *ttkn) {
+void *omrallocate_4K_pages_guarded_in_userExtendedPrivateArea(int *numMBSegments, int *userExtendedPrivateAreaMemoryType, const char *ttkn) {
 	long segments;
 	long origin;
 	long useMemoryType = *userExtendedPrivateAreaMemoryType;
@@ -397,7 +397,7 @@ void * omrallocate_4K_pages_above_bar(int *numMBSegments, const char * ttkn) {
 
 __asm(" IARV64 PLISTVER=MAX,MF=(L,RGETSTOR)":"DS"(rgetstor));
 
-void *omrallocate_4K_pages_guarded_above_bar(int numMBSegments, const char *ttkn) {
+void *omrallocate_4K_pages_guarded_above_bar(int *numMBSegments, const char *ttkn) {
 	long segments;
 	long origin;
 	int  iarv64_rc = 0;
@@ -458,7 +458,7 @@ __asm(" IARV64 PLISTVER=MAX,MF=(L,PGETSTOR)":"DS"(pgetstor));
  *
  * @return non-zero if memory is not freed successfully, 0 otherwise.
  */
-int omrfree_remove_guard(void *address, int numMBSegments){
+int omrfree_remove_guard(void *address, int *numMBSegments){
 	void * xmemobjstart;
 	int  iarv64_rc = 0;
 	long segments;
@@ -488,7 +488,7 @@ __asm(" IARV64 PLISTVER=MAX,MF=(L,PGETSTOR)":"DS"(pgetstor));
  *
  * @return non-zero if memory is not freed successfully, 0 otherwise.
  */
-int omrfree_add_guard(void *address, int numMBSegments) {
+int omrfree_add_guard(void *address, int *numMBSegments) {
 	void * xmemobjstart;
 	int  iarv64_rc = 0;
 	long segments;
