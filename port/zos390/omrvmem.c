@@ -180,12 +180,12 @@ void *omrallocate_1M_fixed_pages(int numMBSegments, int userExtendedPrivateAreaM
 int omrfree_memory_above_bar(void *address, const char *ttkn);
 
 /* omrvmem_support_above_bar.s */
-#pragma linkage(omrfree_memory_guarded_above_bar,OS_NOSTACK)
-int omrfree_add_guard(void *address, int numMBSegments);
+#pragma linkage(omradd_guard,OS_NOSTACK)
+int omradd_guard(void *address, int numMBSegments);
 
 /* omrvmem_support_above_bar.s */
-#pragma linkage(omrfree_memory_guarded_above_bar,OS_NOSTACK)
-int omrfree_add_guard(void *address, int numMBSegments);
+#pragma linkage(omrremove_guard,OS_NOSTACK)
+int omrremove_guard(void *address, int numMBSegments);
 
 /* omrvmem_support_above_bar.s */
 #pragma linkage(omrallocate_4K_pages_above_bar,OS_NOSTACK)
@@ -256,7 +256,15 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 	if (rangeIsValid(identifier, address, byteAmount)) {
 		ASSERT_VALUE_IS_PAGE_SIZE_ALIGNED(address, identifier->pageSize);
 		ASSERT_VALUE_IS_PAGE_SIZE_ALIGNED(byteAmount, identifier->pageSize);
-		ptr = address;
+		intptr_t rc = -1;
+		if (OMR_ARE_ANY_BITS_SET(identifier->mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
+			rc = omrremove_guard(address, byteAmount >> ZOS_REAL_FRAME_SIZE_SHIFT);
+		}
+		if (0 == rc) {
+			ptr = address;
+		} else {
+			portLibrary->error_set_last_error(portLibrary,  -1, OMRPORT_ERROR_VMEM_OPFAILED);
+		}
 	} else {
 		Trc_PRT_vmem_omrvmem_commit_memory_invalidRange(identifier->address, identifier->size, address, byteAmount);
 		portLibrary->error_set_last_error(portLibrary,  -1, OMRPORT_ERROR_VMEM_INVALID_PARAMS);
@@ -300,6 +308,9 @@ omrvmem_decommit_memory(struct OMRPortLibrary *portLibrary, void *address, uintp
 				case OMRPORT_VMEM_RESERVE_USED_J9ALLOCATE_4K_PAGES_ABOVE_BAR: /* FALLTHROUGH */
 				case OMRPORT_VMEM_RESERVE_USED_MOSERVICES:
 					result = omrdiscard_data((void *)address, byteAmount >> ZOS_REAL_FRAME_SIZE_SHIFT);
+					if (0 == result && OMR_ARE_ANY_BITS_SET(identifier->mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
+						result = omradd_guard(address, byteAmount >> ZOS_REAL_FRAME_SIZE_SHIFT);
+					}
 					break;
 				case OMRPORT_VMEM_RESERVE_USED_J9ALLOCATE_LARGE_FIXED_PAGES_ABOVE_BAR:
 					/* do nothing, fixed pages cannot be de-committed. */

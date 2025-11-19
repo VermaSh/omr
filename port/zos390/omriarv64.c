@@ -445,8 +445,8 @@ int omrfree_memory_above_bar(void *address, const char * ttkn){
 	return iarv64_rc;
 }
 
-#pragma prolog(omrfree_change_guarded,"MYPROLOG")
-#pragma epilog(omrfree_change_guarded,"MYEPILOG")
+#pragma prolog(omrremove_guard,"MYPROLOG")
+#pragma epilog(omrremove_guard,"MYEPILOG")
 
 __asm(" IARV64 PLISTVER=MAX,MF=(L,PGETSTOR)":"DS"(pgetstor));
 
@@ -458,7 +458,7 @@ __asm(" IARV64 PLISTVER=MAX,MF=(L,PGETSTOR)":"DS"(pgetstor));
  *
  * @return non-zero if memory is not freed successfully, 0 otherwise.
  */
-int omrfree_remove_guard(void *address, int *numMBSegments){
+int omrremove_guard(void *address, int *numMBSegments){
 	void * xmemobjstart;
 	int  iarv64_rc = 0;
 	long segments;
@@ -476,8 +476,8 @@ int omrfree_remove_guard(void *address, int *numMBSegments){
 	return iarv64_rc;
 }
 
-#pragma prolog(omrfree_add_guard,"MYPROLOG")
-#pragma epilog(omrfree_add_guard,"MYEPILOG")
+#pragma prolog(omradd_guard,"MYPROLOG")
+#pragma epilog(omradd_guard,"MYEPILOG")
 
 __asm(" IARV64 PLISTVER=MAX,MF=(L,PGETSTOR)":"DS"(pgetstor));
 
@@ -488,7 +488,7 @@ __asm(" IARV64 PLISTVER=MAX,MF=(L,PGETSTOR)":"DS"(pgetstor));
  *
  * @return non-zero if memory is not freed successfully, 0 otherwise.
  */
-int omrfree_add_guard(void *address, int *numMBSegments) {
+int omradd_guard(void *address, int *numMBSegments) {
 	void * xmemobjstart;
 	int  iarv64_rc = 0;
 	long segments;
