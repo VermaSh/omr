@@ -256,7 +256,21 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 	if (rangeIsValid(identifier, address, byteAmount)) {
 		ASSERT_VALUE_IS_PAGE_SIZE_ALIGNED(address, identifier->pageSize);
 		ASSERT_VALUE_IS_PAGE_SIZE_ALIGNED(byteAmount, identifier->pageSize);
-		ptr = address;
+#if defined(OMR_ENV_DATA64)
+		if (OMR_ARE_ANY_BITS_SET(identifier->mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
+			intptr_t rc = -1;
+			rc = omrremove_guard(address, byteAmount >> ZOS_REAL_FRAME_SIZE_SHIFT);
+
+			if (0 == rc) {
+				ptr = address;
+			} else {
+				portLibrary->error_set_last_error(portLibrary,  -1, OMRPORT_ERROR_VMEM_OPFAILED);
+			}
+		} else
+#endif /* defined(OMR_ENV_DATA64) */
+		{
+			ptr = address;
+		}
 	} else {
 		Trc_PRT_vmem_omrvmem_commit_memory_invalidRange(identifier->address, identifier->size, address, byteAmount);
 		portLibrary->error_set_last_error(portLibrary,  -1, OMRPORT_ERROR_VMEM_INVALID_PARAMS);
@@ -300,6 +314,9 @@ omrvmem_decommit_memory(struct OMRPortLibrary *portLibrary, void *address, uintp
 				case OMRPORT_VMEM_RESERVE_USED_J9ALLOCATE_4K_PAGES_ABOVE_BAR: /* FALLTHROUGH */
 				case OMRPORT_VMEM_RESERVE_USED_MOSERVICES:
 					result = omrdiscard_data((void *)address, byteAmount >> ZOS_REAL_FRAME_SIZE_SHIFT);
+					if (0 == result && OMR_ARE_ANY_BITS_SET(identifier->mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
+						result = omradd_guard(address, byteAmount >> ZOS_REAL_FRAME_SIZE_SHIFT);
+					}
 					break;
 				case OMRPORT_VMEM_RESERVE_USED_J9ALLOCATE_LARGE_FIXED_PAGES_ABOVE_BAR:
 					/* do nothing, fixed pages cannot be de-committed. */
