@@ -707,12 +707,19 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 				LP_DEBUG_PRINTF2("\t reservePagesAboveBar calling omrallocate_1M_pageable_pages_above_bar(0x%zx, 0x%x)\n", \
 								 numSegments, userExtendedPrivateAreaMemoryType);
 				Trc_PRT_vmem_reservePagesAboveBar_allocate_large_pageable_pages_above_bar(numSegments, userExtendedPrivateAreaMemoryType);
-				ptr = omrallocate_1M_pageable_pages_above_bar(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
 
-				printf("-- In reservePagesAboveBar: call omrallocate_1M_pageable_pages_above_bar %p bytes\n", (void *)byteAmount);
+				if (OMR_ARE_ANY_BITS_SET(mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
+					ptr = omrallocate_1M_pageable_pages_guarded_above_bar(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
+					printf("-- In reservePagesAboveBar: call omrallocate_1M_pageable_pages_guarded_above_bar %p bytes\n", (void *)byteAmount);
+					LP_DEBUG_PRINTF3("\t omrallocate_1M_pageable_pages_guarded_above_bar(0x%zx, 0x%x) returned 0x%zx\n", \
+										numSegments, userExtendedPrivateAreaMemoryType, ptr);
+				} else {
+					ptr = omrallocate_1M_pageable_pages_above_bar(numSegments, userExtendedPrivateAreaMemoryType, ttkn);	/* currently no separate routine for non-guarded pageable pages above bar */
+					printf("-- In reservePagesAboveBar: call omrallocate_1M_pageable_pages_above_bar %p bytes\n", (void *)byteAmount);
+					LP_DEBUG_PRINTF3("\t omrallocate_1M_pageable_pages_above_bar(0x%zx, 0x%x) returned 0x%zx\n", \
+									 numSegments, userExtendedPrivateAreaMemoryType, ptr);
+				}
 
-				LP_DEBUG_PRINTF3("\t omrallocate_1M_pageable_pages_above_bar(0x%zx, 0x%x) returned 0x%zx\n", \
-								 numSegments, userExtendedPrivateAreaMemoryType, ptr);
 				if (NULL == ptr) {
 					if (TRUE == useStrictPageSize) {
 						goto _end;
