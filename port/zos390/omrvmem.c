@@ -588,6 +588,8 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 		allocator = OMRPORT_VMEM_RESERVE_USED_J9ALLOCATE_4K_PAGES_IN_2TO32G_AREA;
 		ptr = omrallocate_4K_pages_in_userExtendedPrivateArea(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
 
+		printf("-- In reservePagesAboveBar: call omrallocate_4K_pages_in_userExtendedPrivateArea %p bytes\n", (void *)byteAmount);
+
 		LP_DEBUG_PRINTF2("\t omrallocate_4K_pages_in_userExtendedPrivateArea(0x%zx) returned 0x%zx\n", \
 						 numSegments, ptr);
 
@@ -669,6 +671,8 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 								 numSegments, userExtendedPrivateAreaMemoryType);
 				Trc_PRT_vmem_reservePagesAboveBar_allocate_large_pageable_pages_above_bar(numSegments, userExtendedPrivateAreaMemoryType);
 				ptr = omrallocate_1M_pageable_pages_above_bar(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
+
+				printf("-- In reservePagesAboveBar: call omrallocate_1M_pageable_pages_above_bar %p bytes\n", (void *)byteAmount);
 
 				LP_DEBUG_PRINTF3("\t omrallocate_1M_pageable_pages_above_bar(0x%zx, 0x%x) returned 0x%zx\n", \
 								 numSegments, userExtendedPrivateAreaMemoryType, ptr);
@@ -782,6 +786,8 @@ default_pageSize_reserve_memory(struct OMRPortLibrary *portLibrary, uintptr_t by
 		 * address, which can be used by free
 		 */
 		allocSize = GET_4K_ALIGNED_ALLOCATION_SIZE(byteAmount);
+
+		printf("-- In default_pageSize_reserve_memory: allocate %p bytes\n", (void *)byteAmount);
 
 		Trc_PRT_vmem_default_reserve_using_mem_allocate_memory(byteAmount);
 		ptr = portLibrary->mem_allocate_memory(portLibrary, allocSize, OMR_GET_CALLSITE(), category->categoryCode);
