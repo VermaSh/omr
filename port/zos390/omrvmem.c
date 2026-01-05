@@ -251,6 +251,10 @@ void *
 omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr_t byteAmount, struct J9PortVmemIdentifier *identifier)
 {
 	void *ptr = NULL;
+#if defined(OMR_ENV_DATA64)
+	uintptr_t numSegments = 0;
+#endif /* defined(OMR_ENV_DATA64) */
+
 	Trc_PRT_vmem_omrvmem_commit_memory_Entry(address, byteAmount);
 
 	if (rangeIsValid(identifier, address, byteAmount)) {
@@ -259,7 +263,9 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 #if defined(OMR_ENV_DATA64)
 		if (OMR_ARE_ANY_BITS_SET(identifier->mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
 			intptr_t rc = -1;
-			rc = omrremove_guard(address, byteAmount >> ZOS_REAL_FRAME_SIZE_SHIFT);
+			/* determine number of 1MB segments required */
+			numSegments = ((byteAmount + ONE_M - 1) & (~(ONE_M - 1))) / ONE_M;
+			rc = omrremove_guard(address, numSegments);
 
 			if (0 == rc) {
 				ptr = address;
@@ -284,6 +290,9 @@ intptr_t
 omrvmem_decommit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr_t byteAmount, struct J9PortVmemIdentifier *identifier)
 {
 	intptr_t result = -1;
+#if defined(OMR_ENV_DATA64)
+	uintptr_t numSegments = 0;
+#endif /* defined(OMR_ENV_DATA64) */
 
 	Trc_PRT_vmem_omrvmem_decommit_memory_Entry(address, byteAmount);
 
@@ -315,7 +324,9 @@ omrvmem_decommit_memory(struct OMRPortLibrary *portLibrary, void *address, uintp
 				case OMRPORT_VMEM_RESERVE_USED_MOSERVICES:
 					result = omrdiscard_data((void *)address, byteAmount >> ZOS_REAL_FRAME_SIZE_SHIFT);
 					if (0 == result && OMR_ARE_ANY_BITS_SET(identifier->mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
-						result = omradd_guard(address, byteAmount >> ZOS_REAL_FRAME_SIZE_SHIFT);
+						/* determine number of 1MB segments required */
+						numSegments = ((byteAmount + ONE_M - 1) & (~(ONE_M - 1))) / ONE_M;
+						result = omradd_guard(address, numSegments);
 					}
 					break;
 				case OMRPORT_VMEM_RESERVE_USED_J9ALLOCATE_LARGE_FIXED_PAGES_ABOVE_BAR:
