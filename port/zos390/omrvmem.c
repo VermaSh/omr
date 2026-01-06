@@ -265,6 +265,8 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 			intptr_t rc = -1;
 			/* determine number of 1MB segments required */
 			numSegments = ((byteAmount + ONE_M - 1) & (~(ONE_M - 1))) / ONE_M;
+			printf("omrvmem_commit_memory: byteAmount %lu\n", byteAmount);
+			printf("omrvmem_commit_memory: adding guard pages for %lu segments at address %p\n", numSegments, address);
 			rc = omrremove_guard(address, numSegments);
 
 			if (0 == rc) {
@@ -326,6 +328,8 @@ omrvmem_decommit_memory(struct OMRPortLibrary *portLibrary, void *address, uintp
 					if (0 == result && OMR_ARE_ANY_BITS_SET(identifier->mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
 						/* determine number of 1MB segments required */
 						numSegments = ((byteAmount + ONE_M - 1) & (~(ONE_M - 1))) / ONE_M;
+						printf("omrvmem_decommit_memory: byteAmount %lu\n", byteAmount);
+						printf("omrvmem_decommit_memory: adding guard pages for %lu segments at address %p\n", numSegments, address);
 						result = omradd_guard(address, numSegments);
 					}
 					break;
@@ -761,6 +765,7 @@ _end:
 	}
 
 	LP_DEBUG_PRINTF1("\t reservePagesAboveBar base address = %p\n", ptr);
+	printf("-- Returning from reservePagesAboveBar: reservePagesAboveBar base address = %p\n", ptr);
 	Trc_PRT_vmem_reservePagesAboveBar_Exit(ptr);
 	return ptr;
 }
