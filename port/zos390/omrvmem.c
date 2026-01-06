@@ -284,6 +284,7 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 		portLibrary->error_set_last_error(portLibrary,  -1, OMRPORT_ERROR_VMEM_INVALID_PARAMS);
 	}
 
+	printf("omrvmem_commit_memory: returning address %p\n", ptr);
 	Trc_PRT_vmem_omrvmem_commit_memory_Exit(address);
 	return ptr;
 }
@@ -369,6 +370,8 @@ omrvmem_decommit_memory(struct OMRPortLibrary *portLibrary, void *address, uintp
 			result = 0;
 		}
 	}
+
+	printf("omrvmem_decomit_memory: result %ld\n", result);
 	Trc_PRT_vmem_omrvmem_decommit_memory_Exit(result);
 	return (intptr_t)result;
 }
