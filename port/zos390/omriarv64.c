@@ -181,21 +181,21 @@ void *omrallocate_1M_pageable_pages_guarded_above_bar(int *numMBSegments, int *u
 	switch (useMemoryType) {
 	case ZOS64_VMEM_ABOVE_BAR_GENERAL:
 		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,"\
-				"GUARDSIZE=(%2),GUARDLOC=HIGH,"\
+				"GUARDSIZE=(%2),"\
 				"PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
 				"ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
 				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
 		break;
 	case ZOS64_VMEM_2_TO_32G:
 		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO32G=YES,"\
-				"GUARDSIZE=(%2),GUARDLOC=HIGH,"\
+				"GUARDSIZE=(%2),"\
 				"PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
 				"ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
 				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
 		break;
 	case ZOS64_VMEM_2_TO_64G:
 		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,USE2GTO64G=YES,"\
-				"GUARDSIZE=(%2),GUARDLOC=HIGH,"\
+				"GUARDSIZE=(%2),"\
 				"PAGEFRAMESIZE=PAGEABLE1MEG,TYPE=PAGEABLE,SEGMENTS=(%2),"\
 				"ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
 				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
