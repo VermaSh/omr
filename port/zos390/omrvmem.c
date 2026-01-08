@@ -268,6 +268,8 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 			printf("omrvmem_commit_memory: byteAmount %lu\n", byteAmount);
 			printf("omrvmem_commit_memory: adding guard pages for %lu segments at address %p\n", numSegments, address);
 			rc = omrremove_guard(address, numSegments);
+			// remove guard twice to verify if the failure we are seeing are due to guard pages not being present
+			rc = omrremove_guard(address, numSegments);
 
 			if (0 == rc) {
 				ptr = address;
