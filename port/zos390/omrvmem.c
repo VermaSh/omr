@@ -267,6 +267,10 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 			numSegments = ((byteAmount + ONE_M - 1) & (~(ONE_M - 1))) / ONE_M;
 			printf("omrvmem_commit_memory: byteAmount %lu\n", byteAmount);
 			printf("omrvmem_commit_memory: adding guard pages for %lu segments at address %p\n", numSegments, address);
+			address += ONE_M + ONE_M; /* skip 2Mb */
+			printf("After adjustment (), address is %p\n", address);
+			printf("omrvmem_commit_memory: byteAmount %lu\n", byteAmount);
+			printf("omrvmem_commit_memory: adding guard pages for %lu segments at address %p\n", numSegments, address);
 			rc = omrremove_guard(address, numSegments);
 
 			if (0 == rc) {
