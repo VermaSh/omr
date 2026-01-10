@@ -470,7 +470,7 @@ int omrremove_guard(void *address, int *numMBSegments){
 	segments = *numMBSegments;
 
 	__asm(" IARV64 REQUEST=CHANGEGUARD,CONVERT=FROMGUARD,COND=YES,"\
-			"MEMOBJSTART=(%2),CONVERTSIZE=(%3),"\
+			"CONVERTSTART=(%2),CONVERTSIZE=(%3),"\
 			"RETCODE=%0,MF=(E,(%1))"\
 			::"m"(iarv64_rc),"r"(&wgetstor),"r"(&xmemobjstart),"r"(&segments));
 	return iarv64_rc;
@@ -500,7 +500,7 @@ int omradd_guard(void *address, int *numMBSegments) {
 	segments = *numMBSegments;
 
 	__asm(" IARV64 REQUEST=CHANGEGUARD,CONVERT=TOGUARD,COND=YES,"\
-			"MEMOBJSTART=(%2),CONVERTSIZE=(%3),"\
+			"CONVERTSTART=(%2),CONVERTSIZE=(%3),"\
 			"RETCODE=%0,MF=(E,(%1))"\
 			::"m"(iarv64_rc),"r"(&wgetstor),"r"(&xmemobjstart),"r"(&segments));
 	return iarv64_rc;
