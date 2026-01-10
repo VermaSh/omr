@@ -733,6 +733,7 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 				if (OMR_ARE_ANY_BITS_SET(mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
 					ptr = omrallocate_1M_pageable_pages_guarded_above_bar(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
 					printf("-- In reservePagesAboveBar: call omrallocate_1M_pageable_pages_guarded_above_bar %p bytes\n", (void *)byteAmount);
+					printf("-- In reservePagesAboveBar: call omrallocate_1M_pageable_pages_guarded_above_bar %ld numSegments\n", numSegments);
 					LP_DEBUG_PRINTF3("\t omrallocate_1M_pageable_pages_guarded_above_bar(0x%zx, 0x%x) returned 0x%zx\n", \
 										numSegments, userExtendedPrivateAreaMemoryType, ptr);
 				} else {
