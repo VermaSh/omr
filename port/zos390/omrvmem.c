@@ -258,7 +258,6 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 	Trc_PRT_vmem_omrvmem_commit_memory_Entry(address, byteAmount);
 
 	if (rangeIsValid(identifier, address, byteAmount)) {
-		printf("omrvmem_commit_memory: committing memory at address %p of size %lu\n", address, byteAmount);
 		ASSERT_VALUE_IS_PAGE_SIZE_ALIGNED(address, identifier->pageSize);
 		ASSERT_VALUE_IS_PAGE_SIZE_ALIGNED(byteAmount, identifier->pageSize);
 #if defined(OMR_ENV_DATA64)
@@ -266,7 +265,6 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 			intptr_t rc = -1;
 			/* determine number of 1MB segments required */
 			numSegments = ((byteAmount + ONE_M - 1) & (~(ONE_M - 1))) / ONE_M;
-			printf("omrvmem_commit_memory: remove guard pages for %lu segments at address %p\n", numSegments, address);
 			rc = omrremove_guard(address, numSegments);
 
 			if (0 == rc) {
@@ -277,7 +275,6 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 		} else
 #endif /* defined(OMR_ENV_DATA64) */
 		{
-			printf("omrvmem_commit_memory: OMRPORT_VMEM_MEMORY_MODE_GUARDED flag wasn't set\n");
 			ptr = address;
 		}
 	} else {
@@ -285,7 +282,6 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 		portLibrary->error_set_last_error(portLibrary,  -1, OMRPORT_ERROR_VMEM_INVALID_PARAMS);
 	}
 
-	printf("omrvmem_commit_memory: returning address %p\n", ptr);
 	Trc_PRT_vmem_omrvmem_commit_memory_Exit(address);
 	return ptr;
 }
@@ -330,8 +326,6 @@ omrvmem_decommit_memory(struct OMRPortLibrary *portLibrary, void *address, uintp
 					if (0 == result && OMR_ARE_ANY_BITS_SET(identifier->mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
 						/* determine number of 1MB segments required */
 						numSegments = (ROUND_DOWN_TO_POWEROF2(byteAmount, ONE_M)) / ONE_M;
-						printf("omrvmem_decommit_memory: byteAmount %lu\n", byteAmount);
-						printf("omrvmem_decommit_memory: adding guard pages for %lu segments at address %p\n", numSegments, address);
 						result = omradd_guard(address, numSegments);
 					}
 					break;
@@ -371,8 +365,6 @@ omrvmem_decommit_memory(struct OMRPortLibrary *portLibrary, void *address, uintp
 			result = 0;
 		}
 	}
-
-	printf("omrvmem_decomit_memory: result %ld\n", result);
 	Trc_PRT_vmem_omrvmem_decommit_memory_Exit(result);
 	return (intptr_t)result;
 }
@@ -729,13 +721,10 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 
 				if (OMR_ARE_ANY_BITS_SET(mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
 					ptr = omrallocate_1M_pageable_pages_guarded_above_bar(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
-					printf("-- In reservePagesAboveBar: call omrallocate_1M_pageable_pages_guarded_above_bar %p bytes\n", (void *)byteAmount);
-					printf("-- In reservePagesAboveBar: call omrallocate_1M_pageable_pages_guarded_above_bar %ld numSegments\n", numSegments);
 					LP_DEBUG_PRINTF3("\t omrallocate_1M_pageable_pages_guarded_above_bar(0x%zx, 0x%x) returned 0x%zx\n", \
 										numSegments, userExtendedPrivateAreaMemoryType, ptr);
 				} else {
 					ptr = omrallocate_1M_pageable_pages_above_bar(numSegments, userExtendedPrivateAreaMemoryType, ttkn);	/* currently no separate routine for non-guarded pageable pages above bar */
-					printf("-- In reservePagesAboveBar: call omrallocate_1M_pageable_pages_above_bar %p bytes\n", (void *)byteAmount);
 					LP_DEBUG_PRINTF3("\t omrallocate_1M_pageable_pages_above_bar(0x%zx, 0x%x) returned 0x%zx\n", \
 									 numSegments, userExtendedPrivateAreaMemoryType, ptr);
 				}
@@ -770,7 +759,6 @@ _end:
 	}
 
 	LP_DEBUG_PRINTF1("\t reservePagesAboveBar base address = %p\n", ptr);
-	printf("-- Returning from reservePagesAboveBar: reservePagesAboveBar base address = %p\n", ptr);
 	Trc_PRT_vmem_reservePagesAboveBar_Exit(ptr);
 	return ptr;
 }
