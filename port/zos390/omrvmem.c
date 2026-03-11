@@ -278,6 +278,9 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 			if (0 == rc) {
 				ptr = (void*)alignedAddress;
 			} else {
+				printf("omrvmem_commit_memory: failed to remove guard pages for %lu segments at address %p with return code %ld\n", numSegments, alignedAddress, rc);
+				printf("omrvmem_commit_memory: about to trigger core dump\n");
+				*ptr = 0xdeadbeef;
 				portLibrary->error_set_last_error(portLibrary,  -1, OMRPORT_ERROR_VMEM_OPFAILED);
 			}
 		} else
@@ -625,7 +628,7 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 
 	Trc_PRT_vmem_reservePagesAboveBar_Entry(byteAmount, pageSize, pageFlags, options, userExtendedPrivateAreaMemoryType);
 
-	LP_DEBUG_PRINTF5("\t reservePagesAboveBar byteAmount=0x%zx, pageSize=x%zx, pageFlags=0x%zx, useStrictPageSize=0x%x, userExtendedPrivateAreaMemoryType=0x%x\n", \
+	printf("\t reservePagesAboveBar byteAmount=0x%zx, pageSize=x%zx, pageFlags=0x%zx, useStrictPageSize=0x%x, userExtendedPrivateAreaMemoryType=0x%x\n", \
 					 byteAmount, pageSize, pageFlags, useStrictPageSize, userExtendedPrivateAreaMemoryType);
 
 	/* determine number of 1MB segments required */
@@ -636,10 +639,10 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 
 	if ((ZOS64_VMEM_ABOVE_BAR_GENERAL != userExtendedPrivateAreaMemoryType) && (numSegments > userExtendedPrivateAreaMemoryMax)) {
 		if (TWO_G == pageSize) {
-			LP_DEBUG_PRINTF2("\t *** ERROR reservePagesAboveBar max 1GB units is 0x%zx, requesting (0x%zx)\n", \
+			printf("\t *** ERROR reservePagesAboveBar max 1GB units is 0x%zx, requesting (0x%zx)\n", \
 							 (userExtendedPrivateAreaMemoryMax / 1024), numUnits);
 		} else {
-			LP_DEBUG_PRINTF2("\t *** ERROR reservePagesAboveBar max 1MB segments is 0x%zx, requesting (0x%zx)\n", \
+			printf("\t *** ERROR reservePagesAboveBar max 1MB segments is 0x%zx, requesting (0x%zx)\n", \
 					userExtendedPrivateAreaMemoryMax, numSegments);
 		}
 		goto _end;
@@ -648,7 +651,7 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 	if ((FOUR_K == pageSize) && (ZOS64_VMEM_ABOVE_BAR_GENERAL != userExtendedPrivateAreaMemoryType)) {
 		const char *const ttkn = PPG_ipt_ttoken;
 
-		LP_DEBUG_PRINTF1("\t reservePagesAboveBar calling omrallocate_4K_pages_in_userExtendedPrivate_area(0x%zx)\n", \
+		printf("\t reservePagesAboveBar calling omrallocate_4K_pages_in_userExtendedPrivate_area(0x%zx)\n", \
 						 numSegments);
 
 		Trc_PRT_vmem_reservePagesAboveBar_allocate_4K_pages_in_2to32G_area(numSegments);
@@ -657,7 +660,7 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 
 		printf("-- In reservePagesAboveBar: call omrallocate_4K_pages_in_userExtendedPrivateArea %p bytes\n", (void *)byteAmount);
 
-		LP_DEBUG_PRINTF2("\t omrallocate_4K_pages_in_userExtendedPrivateArea(0x%zx) returned 0x%zx\n", \
+		printf("\t omrallocate_4K_pages_in_userExtendedPrivateArea(0x%zx) returned 0x%zx\n", \
 						 numSegments, ptr);
 
 		if (NULL != ptr) {
@@ -684,12 +687,12 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 			) {
 				const char *const ttkn = PPG_ipt_ttoken;
 
-				LP_DEBUG_PRINTF2("\t reservePagesAboveBar calling omrallocate_2G_pages(0x%zx, 0x%x)\n", \
+				printf("\t reservePagesAboveBar calling omrallocate_2G_pages(0x%zx, 0x%x)\n", \
 								 numUnits, userExtendedPrivateAreaMemoryType);
 				Trc_PRT_vmem_reservePagesAboveBar_allocate_large_2G_pages(numUnits, userExtendedPrivateAreaMemoryType);
 				ptr = omrallocate_2G_pages(numUnits, userExtendedPrivateAreaMemoryType, ttkn);
 
-				LP_DEBUG_PRINTF3("\t omrallocate_2G_pages(0x%zx, 0x%x) returned 0x%zx\n", \
+				printf("\t omrallocate_2G_pages(0x%zx, 0x%x) returned 0x%zx\n", \
 								 numUnits, userExtendedPrivateAreaMemoryType, ptr);
 				if (NULL == ptr) {
 					if (TRUE == useStrictPageSize) {
@@ -709,12 +712,12 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 			) {
 				const char *const ttkn = PPG_ipt_ttoken;
 
-				LP_DEBUG_PRINTF2("\t reservePagesAboveBar calling omrallocate_1M_fixed_pages(0x%zx, 0x%x)\n", \
+				printf("\t reservePagesAboveBar calling omrallocate_1M_fixed_pages(0x%zx, 0x%x)\n", \
 								 numSegments, userExtendedPrivateAreaMemoryType);
 				Trc_PRT_vmem_reservePagesAboveBar_allocate_large_pages(numSegments, userExtendedPrivateAreaMemoryType);
 				ptr = omrallocate_1M_fixed_pages(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
 
-				LP_DEBUG_PRINTF3("\t omrallocate_1M_fixed_pages(0x%zx, 0x%x) returned 0x%zx\n", \
+				printf("\t omrallocate_1M_fixed_pages(0x%zx, 0x%x) returned 0x%zx\n", \
 								 numSegments, userExtendedPrivateAreaMemoryType, ptr);
 				if (NULL == ptr) {
 					if (TRUE == useStrictPageSize) {
@@ -734,7 +737,7 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 			) {
 				const char *const ttkn = PPG_ipt_ttoken;
 
-				LP_DEBUG_PRINTF2("\t reservePagesAboveBar calling omrallocate_1M_pageable_pages_above_bar(0x%zx, 0x%x)\n", \
+				printf("\t reservePagesAboveBar calling omrallocate_1M_pageable_pages_above_bar(0x%zx, 0x%x)\n", \
 								 numSegments, userExtendedPrivateAreaMemoryType);
 				Trc_PRT_vmem_reservePagesAboveBar_allocate_large_pageable_pages_above_bar(numSegments, userExtendedPrivateAreaMemoryType);
 
@@ -767,7 +770,7 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 			}
 		} else {
 			/* error, we were given an invalid page size */
-			LP_DEBUG_PRINTF4("\t reservePagesAboveBar invalid params: byteAmount = 0x%x, pageSize = 0x%x, pageFlags = 0x%x, userExtendedPrivateAreaMemoryType = 0x%x\n", \
+			printf("\t reservePagesAboveBar invalid params: byteAmount = 0x%x, pageSize = 0x%x, pageFlags = 0x%x, userExtendedPrivateAreaMemoryType = 0x%x\n", \
 							 byteAmount, pageSize, pageFlags, userExtendedPrivateAreaMemoryType);
 		}
 	}
@@ -780,7 +783,7 @@ _end:
 		update_vmemIdentifier(identifier, 0, 0, 0, 0, 0, 0, 0, NULL);
 	}
 
-	LP_DEBUG_PRINTF1("\t reservePagesAboveBar base address = %p\n", ptr);
+	printf("\t reservePagesAboveBar base address = %p\n", ptr);
 	printf("-- Returning from reservePagesAboveBar: reservePagesAboveBar base address = %p\n", ptr);
 	Trc_PRT_vmem_reservePagesAboveBar_Exit(ptr);
 	return ptr;
