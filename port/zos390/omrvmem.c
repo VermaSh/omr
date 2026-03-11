@@ -280,7 +280,8 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 			} else {
 				printf("omrvmem_commit_memory: failed to remove guard pages for %lu segments at address %p with return code %ld\n", numSegments, alignedAddress, rc);
 				printf("omrvmem_commit_memory: about to trigger core dump\n");
-				*ptr = 0xdeadbeef;
+				uintptr_t *p = NULL;
+				*p = 0xdeadbeef;
 				portLibrary->error_set_last_error(portLibrary,  -1, OMRPORT_ERROR_VMEM_OPFAILED);
 			}
 		} else
