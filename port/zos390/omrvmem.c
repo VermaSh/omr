@@ -263,7 +263,7 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 		ASSERT_VALUE_IS_PAGE_SIZE_ALIGNED(byteAmount, identifier->pageSize);
 #if defined(OMR_ENV_DATA64)
 		if (OMR_ARE_ANY_BITS_SET(identifier->mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
-			printf("omrvmem_commit_memory: identifier address: %p and upper limit: %p\n", identifier->address, identifier->address + identifier->size - 1);
+			printf("omrvmem_commit_memory: identifier address: %p and upper limit: %p\n", identifier->address, (void*) ((uintptr_t)identifier->address + identifier->size - 1));
 			intptr_t rc = -1;
 			uintptr_t alignedByteAmount = ROUND_UP_TO_POWEROF2(byteAmount, ONE_M);
 			uintptr_t alignedAddress = ROUND_DOWN_TO_POWEROF2((uintptr_t)address, ONE_M);
