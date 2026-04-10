@@ -275,7 +275,7 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 				rc = omrremove_guard((void *)alignedAddress, numSegments);
 			}
 
-			if (0 == rc) {
+			if (0 == rc || ( 4 == rc && identifier->pageSize == FOUR_K)) {
 				ptr = (void*)alignedAddress;
 			} else {
 				printf("omrvmem_commit_memory: failed to remove guard pages for %lu segments at address %p with return code %ld\n", numSegments, alignedAddress, rc);
@@ -347,6 +347,9 @@ omrvmem_decommit_memory(struct OMRPortLibrary *portLibrary, void *address, uintp
 							printf("omrvmem_decommit_memory: alignedAddress %p -- alignedByteAmount %lu\n", alignedAddress, alignedByteAmount);
 							printf("omrvmem_decommit_memory: adding guard pages for %lu segments at address %p (alignedAddress %p)\n", numSegments, address, alignedAddress);
 							result = omradd_guard((void *)address, numSegments);
+							if (4 == result && identifier->pageSize == FOUR_K) {
+								result = 0;
+							}
 						}
 					}
 					break;
@@ -656,8 +659,11 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 
 		Trc_PRT_vmem_reservePagesAboveBar_allocate_4K_pages_in_2to32G_area(numSegments);
 		allocator = OMRPORT_VMEM_RESERVE_USED_J9ALLOCATE_4K_PAGES_IN_2TO32G_AREA;
-		ptr = omrallocate_4K_pages_in_userExtendedPrivateArea(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
-
+		if (OMR_ARE_ANY_BITS_SET(mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
+			ptr = omrallocate_4K_pages_guarded_in_userExtendedPrivateArea(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
+		} else {
+			ptr = omrallocate_4K_pages_in_userExtendedPrivateArea(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
+		}
 		printf("-- In reservePagesAboveBar: call omrallocate_4K_pages_in_userExtendedPrivateArea %p bytes\n", (void *)byteAmount);
 
 		printf("\t omrallocate_4K_pages_in_userExtendedPrivateArea(0x%zx) returned 0x%zx\n", \
