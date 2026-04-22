@@ -275,7 +275,7 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 				rc = omrremove_guard((void *)alignedAddress, numSegments);
 			}
 
-			if (0 == rc) {
+			if (0 == rc || ( 4 == rc && identifier->pageSize == FOUR_K)) {
 				ptr = (void*)alignedAddress;
 			} else {
 				printf("omrvmem_commit_memory: failed to remove guard pages for %lu segments at address %p with return code %ld\n", numSegments, alignedAddress, rc);
@@ -347,6 +347,9 @@ omrvmem_decommit_memory(struct OMRPortLibrary *portLibrary, void *address, uintp
 							printf("omrvmem_decommit_memory: alignedAddress %p -- alignedByteAmount %lu\n", alignedAddress, alignedByteAmount);
 							printf("omrvmem_decommit_memory: adding guard pages for %lu segments at address %p (alignedAddress %p)\n", numSegments, address, alignedAddress);
 							result = omradd_guard((void *)address, numSegments);
+							if (4 == result && identifier->pageSize == FOUR_K) {
+								result = 0;
+							}
 						}
 					}
 					break;
