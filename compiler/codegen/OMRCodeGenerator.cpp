@@ -1094,9 +1094,9 @@ bool OMR::CodeGenerator::mulDecompositionCostIsJustified(int numOfOperations, ch
     if (comp->getOptions()->trace(OMR::treeSimplification)) {
         OMR::Logger *log = comp->log();
         if (numOfOperations <= 3)
-            log->prints("MulDecomp cost is justified\n");
+            log->prints("common: MulDecomp cost is justified\n");
         else
-            log->printf("MulDecomp cost is too high. numCycle=%i(max:3)\n", numOfOperations);
+            log->printf("common: MulDecomp cost is too high. numCycle=%i(max:3)\n", numOfOperations);
     }
     return numOfOperations <= 3 && numOfOperations != 0;
 }
