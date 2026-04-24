@@ -3055,6 +3055,8 @@ static void decomposeMultiply(TR::Node *node, TR::Simplifier *s, bool isLong)
         {
             node->setNumChildren(1);
         }
+    } else {
+        comp->log()->printf("treeSimplification: mulDecompositionCostIsJustified returned false\n");
     }
 }
 
@@ -7339,6 +7341,7 @@ TR::Node *imulSimplifier(TR::Node *node, TR::Block *block, TR::Simplifier *s)
 
     TR::ILOpCodes firstChildOp = firstChild->getOpCodeValue();
     TR::ILOpCodes secondChildOp = secondChild->getOpCodeValue();
+    logprintf(s->trace(), s->comp()->log(), "Entereing imulSimplifier\n");
 
     // a*(-c) = -(a*c)   // move up ineg for better composing
     if (secondChildOp == TR::iconst && secondChild->getInt() < 0
@@ -7475,6 +7478,7 @@ TR::Node *imulSimplifier(TR::Node *node, TR::Block *block, TR::Simplifier *s)
     } else if (secondChildOp == TR::iconst && !s->comp()->cg()->doIntMulDecompositionInCG() && !s->getLastRun()
         && secondChild->getInt() != 0 && !isNonNegativePowerOf2(secondChild->getInt())
         && secondChild->getInt() != TR::getMinSigned<TR::Int32>()) {
+        logprintf(s->trace(), s->comp()->log(), "About to call decomposeMultiply\n");
         decomposeMultiply(node, s, false);
     }
 
