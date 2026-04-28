@@ -526,7 +526,7 @@ OMRIARV64 RMODE ANY                                                      000000
 * #pragma prolog(omrallocate_4K_pages_guarded_in_userExtendedPrivateAre  000311
 * #pragma epilog(omrallocate_4K_pages_guarded_in_userExtendedPrivateAre  000312
 *                                                                        000313
-* __asm(" IARV64 PLISTVER=MAX,MF=(L,TGETSTOR)":"DS"(Tgetstor));          000314
+* __asm(" IARV64 PLISTVER=MAX,MF=(L,TGETSTOR)":"DS"(tgetstor));          000314
 *                                                                        000315
 * /*                                                                     000316
 *  * Allocate 4KB pages guarded in 2G-32G range using IARV64 system mac  000317
@@ -546,7 +546,7 @@ OMRIARV64 RMODE ANY                                                      000000
 *  __asm(" IARV64 PLISTVER=MAX,MF=(L,TGETSTOR)":"DS"(wgetstor));         000331
 *                                                                        000332
 *  segments = *numMBSegments;                                            000333
-*  wgetstor = mgetstor;                                                  000334
+*  wgetstor = tgetstor;                                                  000334
 *                                                                        000335
 *  switch (useMemoryType) {                                              000336
 *  case ZOS64_VMEM_ABOVE_BAR_GENERAL:                                    000337
@@ -744,7 +744,7 @@ OMRIARV64 RMODE ANY                                                      000000
          J     @@CCN@113                                                 000528
 @@PFD@@  DC    XL8'00C300C300D50000'   Prefix Data Marker                000528
          DC    CL8'20260428'           Compiled Date YYYYMMDD            000528
-         DC    CL6'121127'             Compiled Time HHMMSS              000528
+         DC    CL6'124049'             Compiled Time HHMMSS              000528
          DC    XL4'42040000'           Compiler Version                  000528
          DC    XL2'0000'               Reserved                          000528
          DC    BL1'00000000'           Flag Set 1                        000528
@@ -1953,11 +1953,11 @@ OMRIARV64 CSECT ,                                                        000000
          LG    14,@59numMBSegments@31                                    000333
          LGF   14,0(0,14)              (*)int                            000333
          STG   14,@66segments@35                                         000333
-*  wgetstor = mgetstor;                                                  000334
+*  wgetstor = tgetstor;                                                  000334
          LARL  14,$STATIC                                                000334
          DROP  14                                                        000334
          USING @@STATICD@@,14                                            000334
-         MVC   @65wgetstor,@46mgetstor                                   000334
+         MVC   @65wgetstor,@57tgetstor                                   000334
 *                                                                        000335
 *  switch (useMemoryType) {                                              000336
          LG    14,@63useMemoryType@37                                    000336
@@ -2936,7 +2936,7 @@ $STATIC  DS    0D                                                        000000
          ORG   @@STATICD@@+1024                                          000000
 @46mgetstor DS XL256                                                     000000
          ORG   @@STATICD@@+1280                                          000000
-@57Tgetstor DS XL256                                                     000000
+@57tgetstor DS XL256                                                     000000
          ORG   @@STATICD@@+1536                                          000000
 @68rgetstor DS XL256                                                     000000
          ORG   @@STATICD@@+1792                                          000000

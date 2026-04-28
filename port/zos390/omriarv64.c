@@ -311,7 +311,7 @@ void * omrallocate_4K_pages_in_userExtendedPrivateArea(int *numMBSegments, int *
 #pragma prolog(omrallocate_4K_pages_guarded_in_userExtendedPrivateArea,"MYPROLOG")
 #pragma epilog(omrallocate_4K_pages_guarded_in_userExtendedPrivateArea,"MYEPILOG")
 
-__asm(" IARV64 PLISTVER=MAX,MF=(L,TGETSTOR)":"DS"(Tgetstor));
+__asm(" IARV64 PLISTVER=MAX,MF=(L,TGETSTOR)":"DS"(tgetstor));
 
 /*
  * Allocate 4KB pages guarded in 2G-32G range using IARV64 system macro.
@@ -331,7 +331,7 @@ void *omrallocate_4K_pages_guarded_in_userExtendedPrivateArea(int *numMBSegments
 	__asm(" IARV64 PLISTVER=MAX,MF=(L,TGETSTOR)":"DS"(wgetstor));
 
 	segments = *numMBSegments;
-	wgetstor = mgetstor;
+	wgetstor = tgetstor;
 
 	switch (useMemoryType) {
 	case ZOS64_VMEM_ABOVE_BAR_GENERAL:
