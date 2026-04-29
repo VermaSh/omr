@@ -553,7 +553,7 @@ OMRIARV64 RMODE ANY                                                      000000
 *   break;                                                               000338
 *  case ZOS64_VMEM_2_TO_32G:                                             000339
 *   __asm(" IARV64 REQUEST=GETSTOR,COND=NO,SADMP=NO,CONTROL=UNAUTH,USE2  000340
-*     "GUARDSIZE=(%2),"\                                                 000341
+*     "GUARDSIZE64=(%2),"\                                               000341
 *     "PAGEFRAMESIZE=4K,TYPE=PAGEABLE,SEGMENTS=(%2),"\                   000342
 *     "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\                  000343
 *     ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(t  000344
@@ -743,8 +743,8 @@ OMRIARV64 RMODE ANY                                                      000000
 * int omrdiscard_data(void *address, int *numFrames) {                   000528
          J     @@CCN@113                                                 000528
 @@PFD@@  DC    XL8'00C300C300D50000'   Prefix Data Marker                000528
-         DC    CL8'20260428'           Compiled Date YYYYMMDD            000528
-         DC    CL6'124049'             Compiled Time HHMMSS              000528
+         DC    CL8'20260429'           Compiled Date YYYYMMDD            000528
+         DC    CL6'094843'             Compiled Time HHMMSS              000528
          DC    XL4'42040000'           Compiler Version                  000528
          DC    XL2'0000'               Reserved                          000528
          DC    BL1'00000000'           Flag Set 1                        000528
@@ -1987,10 +1987,10 @@ OMRIARV64 CSECT ,                                                        000000
          USING @@PARMD@7,14                                              000340
          LG    6,@61ttkn@33                                              000340
          IARV64 REQUEST=GETSTOR,COND=NO,SADMP=NO,CONTROL=UNAUTH,USE2GTOX 000340
-               32G=YES,GUARDSIZE=(4),PAGEFRAMESIZE=4K,TYPE=PAGEABLE,SEGX 000340
-               MENTS=(4),ORIGIN=(2),TTOKEN=(6),RETCODE=200(13),MF=(E,(5X 000340
-               ))                                                        000340
-*     "GUARDSIZE=(%2),"\                                                 000341
+               32G=YES,GUARDSIZE64=(4),PAGEFRAMESIZE=4K,TYPE=PAGEABLE,SX 000340
+               EGMENTS=(4),ORIGIN=(2),TTOKEN=(6),RETCODE=200(13),MF=(E,X 000340
+               (5))                                                      000340
+*     "GUARDSIZE64=(%2),"\                                               000341
 *     "PAGEFRAMESIZE=4K,TYPE=PAGEABLE,SEGMENTS=(%2),"\                   000342
 *     "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\                  000343
 *     ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(t  000344
@@ -2949,4 +2949,4 @@ $STATIC  DS    0D                                                        000000
 @103dgetstor DS XL256                                                    000000
          ORG   @@STATICD@@+2816                                          000000
 @112qgetstor DS XL256                                                    000000
-         END   ,(5650ZOS   ,2400,26118)                                  000000
+         END   ,(5650ZOS   ,2400,26119)                                  000000
