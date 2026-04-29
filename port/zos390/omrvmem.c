@@ -1158,6 +1158,7 @@ reservePages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *id
 
 	/* If the pageSize is not one of the large page sizes supported, error */
 	if (FALSE == isLargePageSizeSupported(portLibrary, params->pageSize, params->pageFlags)) {
+		printf("-- reservePages: pageSize is not one of the large page sizes supported\n");
 		update_vmemIdentifier(identifier, NULL, NULL, 0, 0, 0, 0, 0, NULL);
 		Trc_PRT_vmem_omrvmem_reserve_memory_unsupported_page_size(params->pageSize);
 		goto _end;
@@ -1166,6 +1167,7 @@ reservePages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *id
 			&& !isRmode64Supported()
 #endif
 			) {
+		printf("-- reservePages: useExecutablePages && !isRmode64Supported() path\n");
 		if (use2To32GArea ||
 				(useStrictAddress && ((UDATA) params->startAddress + params->byteAmount >= TWO_G))
 				) {
@@ -1187,6 +1189,7 @@ reservePages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *id
 	} else if ((params->startAddress >= 0) &&
 			   ((uintptr_t)params->endAddress <= FOUR_GIG_LIMIT)
 	) {
+		printf("-- reservePages: in low memory range path\n");
 		/* Request is for low memory range.
 		 * If 2to32G flag is set, we may be able to allocate memory using large pages above the bar.
 		 * Else, if page size requested is 1MB pageable, allocate large pages below the bar.
@@ -1194,6 +1197,7 @@ reservePages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *id
 		 */
 		if (TRUE == use2To32GArea) {
 			baseAddress = reservePagesAboveBar(portLibrary, identifier, params->mode, params->byteAmount, params->pageSize, params->pageFlags, params->options, category);
+			printf("-- reservePages: in use2To32GArea path\n");
 			if ((NULL != baseAddress) &&
 				(TRUE == isStrictAndOutOfRange(params, baseAddress))
 			) {
@@ -1205,6 +1209,7 @@ reservePages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *id
 				baseAddress = NULL;
 			}
 		} else {
+			printf("-- reservePages: in non use2To32GArea path\n");
 			if ((ONE_M == params->pageSize) &&
 				(0 != (OMRPORT_VMEM_PAGE_FLAG_PAGEABLE & params->pageFlags))
 			) {
@@ -1220,9 +1225,11 @@ reservePages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *id
 			}
 		}
 	} else {
+		printf("-- reservePages: in high memory range path\n");
 		baseAddress = reservePagesAboveBar(portLibrary, identifier, params->mode, params->byteAmount, params->pageSize, params->pageFlags, params->options, category);
 #else /* OMR_ENV_DATA64 */
 	} else {
+		printf("-- reservePages: reserve1MPageableBelowBar path\n");
 		baseAddress = reserve1MPageableBelowBar(portLibrary, identifier, params->mode, params->byteAmount, category);
 #endif /* OMR_ENV_DATA64 */
 	}
