@@ -1290,6 +1290,7 @@ reserve4KPages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *
 	BOOLEAN use2To32GArea = (OMRPORT_VMEM_ZOS_USE2TO32G_AREA == (OMRPORT_VMEM_ZOS_USE2TO32G_AREA & params->options));
 
 	if (!use2To32GArea) {
+		printf("-- reserve4KPages: in low memory range path (use2To32GArea = FALSE)\n");
 #endif /* OMR_ENV_DATA64 */
 		/* default_pageSize_reserve_memory will update the vmem identifier with the correct page size */
 		if (((uintptr_t)params->endAddress <= FOUR_GIG_LIMIT) ||
@@ -1314,6 +1315,7 @@ reserve4KPages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *
 		}
 #if defined(OMR_ENV_DATA64)
 	} else {
+		printf("-- reserve4KPages: in high memory range path (use2To32GArea = TRUE)\n");
 		/* use the 2to32GArea */
 		baseAddress = reservePagesAboveBar(portLibrary, identifier, params->mode, params->byteAmount, FOUR_K, OMRPORT_VMEM_PAGE_FLAG_PAGEABLE, params->options, category);
 	}
