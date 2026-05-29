@@ -1068,6 +1068,7 @@ omrvmem_reserve_memory_ex(struct OMRPortLibrary *portLibrary, struct J9PortVmemI
 	Assert_PRT_true(params.startAddress <= params.endAddress);
 	ASSERT_VALUE_IS_PAGE_SIZE_ALIGNED(params.byteAmount, params.pageSize);
 
+	printf("-- In omrvmem_reserve_memory_ex: use2To32GArea: %d, PPG_userExtendedPrivateAreaMemoryType: %d, \n", use2To32GArea, PPG_userExtendedPrivateAreaMemoryType);
 #if defined(OMR_ENV_DATA64)
 	/* Invalid input */
 	if (use2To32GArea && (ZOS64_VMEM_ABOVE_BAR_GENERAL == PPG_userExtendedPrivateAreaMemoryType)) {
@@ -1080,6 +1081,7 @@ omrvmem_reserve_memory_ex(struct OMRPortLibrary *portLibrary, struct J9PortVmemI
 		 */
 
 		LP_DEBUG_PRINTF("\n omrvmem_reserve_memory_ex: OMRPORT_VMEM_ZOS_USE2TO32G_AREA requested but not supported\n");
+		printf("\t *** ERROR omrvmem_reserve_memory_ex: OMRPORT_VMEM_ZOS_USE2TO32G_AREA requested but not supported\n");
 
 		update_vmemIdentifier(identifier, NULL, NULL, 0, 0, 0, 0, 0, NULL);
 		Trc_PRT_vmem_omrvmem_reserve_memory_invalid_input();
@@ -1097,9 +1099,11 @@ omrvmem_reserve_memory_ex(struct OMRPortLibrary *portLibrary, struct J9PortVmemI
 				&& !use2To32GArea
 				&& OMR_ARE_ALL_BITS_SET(params.mode, OMRPORT_VMEM_MEMORY_MODE_EXECUTE)
 		) {
+			printf("-- omrvmem_reserve_memory_ex: trying to reserve executable memory with moservices\n");
 			baseAddress = reserve_memory_with_moservices(portLibrary, identifier, &params, category);
 		} else
 #endif /* OMR_ENV_DATA64 */
+			printf("-- omrvmem_reserve_memory_ex: trying to reserve memory with page size %d\n", (void *)params.pageSize);
 			if (FOUR_K == params.pageSize) {
 				if (0 != (params.pageFlags & OMRPORT_VMEM_PAGE_FLAG_PAGEABLE)) {
 					baseAddress = reserve4KPages(portLibrary, identifier, &params, category);
@@ -1123,6 +1127,7 @@ omrvmem_reserve_memory_ex(struct OMRPortLibrary *portLibrary, struct J9PortVmemI
 
 	LP_DEBUG_PRINTF2("\t omrvmem_reserve_memory_ex returning 0x%zx, allocator = %i, \n", \
 			baseAddress, identifier->allocator);
+	printf("-- Returning from omrvmem_reserve_memory_ex: base address (%p bytes) = %p\n", (void *)params.byteAmount, baseAddress);
 	return adjustForRequestedAlignment(callerParams, baseAddress);
 }
 
@@ -1321,6 +1326,7 @@ reserve4KPages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *
 	}
 #endif /* OMR_ENV_DATA64 */
 
+	printf("-- reserve4KPages: returning %p\n", baseAddress);
 	return baseAddress;
 }
 
