@@ -199,6 +199,7 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase *env, MM_MemoryH
 #endif /* defined(J9ZOS39064) */
 
 			void *requestedTopAddress = (void *)((uintptr_t)startAllocationAddress + allocateSize + tailPadding);
+			printf("-- Requested top address is %p\n", requestedTopAddress);
 
 			if (extensions->isConcurrentScavengerHWSupported()) {
 				void *ceilingToRequest = ceiling;
@@ -256,6 +257,7 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase *env, MM_MemoryH
 						if (requestedTopAddress < (void *)NON_SCALING_LOW_MEMORY_HEAP_CEILING) {
 							adjustedCeiling = (void *)OMR_MIN(NON_SCALING_LOW_MEMORY_HEAP_CEILING, (uintptr_t)ceiling);
 
+							printf("Attempting to allocate heap below 4G, ceiling: %p\n", adjustedCeiling);
 							instance = MM_VirtualMemory::newInstance(
 									env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress,
 									adjustedCeiling, mode, options, memoryCategory);
@@ -276,6 +278,7 @@ MM_MemoryManager::createVirtualMemoryForHeap(MM_EnvironmentBase *env, MM_MemoryH
 							if ((NULL == instance) && (requestedTopAddress <= EIGHT_GB_ADDRESS)) {
 								adjustedCeiling = (void *)OMR_MIN((uintptr_t)EIGHT_GB_ADDRESS, (uintptr_t)ceiling);
 
+								printf("Attempting to allocate heap below 8G, ceiling: %p\n", adjustedCeiling);
 								instance = MM_VirtualMemory::newInstance(
 										env, heapAlignment, allocateSize, pageSize, pageFlags, tailPadding, preferredAddress,
 										adjustedCeiling, mode, options, memoryCategory);
