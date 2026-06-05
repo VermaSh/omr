@@ -271,7 +271,7 @@ omrvmem_commit_memory(struct OMRPortLibrary *portLibrary, void *address, uintptr
 				rc = omrremove_guard((void *)alignedAddress, numSegments);
 			}
 
-			if (0 == rc) {
+			if (0 == rc || ( 4 == rc && identifier->pageSize == FOUR_K)) {
 				ptr = (void*)alignedAddress;
 			} else {
 				portLibrary->error_set_last_error(portLibrary,  -1, OMRPORT_ERROR_VMEM_OPFAILED);
@@ -334,6 +334,9 @@ omrvmem_decommit_memory(struct OMRPortLibrary *portLibrary, void *address, uintp
 							/* determine number of 1MB segments required */
 							numSegments = alignedByteAmount / ONE_M;
 							result = omradd_guard((void *)address, numSegments);
+							if (4 == result && identifier->pageSize == FOUR_K) {
+								result = 0;
+							}
 						}
 					}
 					break;
@@ -590,7 +593,7 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 	uintptr_t userExtendedPrivateAreaMemoryType = ZOS64_VMEM_ABOVE_BAR_GENERAL;
 	uintptr_t userExtendedPrivateAreaMemoryMax = 0;
 
-	if (OMRPORT_VMEM_ZOS_USE2TO32G_AREA == (OMRPORT_VMEM_ZOS_USE2TO32G_AREA & options)) {
+	if (OMR_ARE_ANY_BITS_SET(mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED) || OMRPORT_VMEM_ZOS_USE2TO32G_AREA == (OMRPORT_VMEM_ZOS_USE2TO32G_AREA & options)) {
 		userExtendedPrivateAreaMemoryType = PPG_userExtendedPrivateAreaMemoryType;
 		/*
 		 * Requesting more memory as supported would cause ZOS System failure
@@ -642,7 +645,11 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 
 		Trc_PRT_vmem_reservePagesAboveBar_allocate_4K_pages_in_2to32G_area(numSegments);
 		allocator = OMRPORT_VMEM_RESERVE_USED_J9ALLOCATE_4K_PAGES_IN_2TO32G_AREA;
-		ptr = omrallocate_4K_pages_in_userExtendedPrivateArea(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
+		if (OMR_ARE_ANY_BITS_SET(mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
+			ptr = omrallocate_4K_pages_guarded_in_userExtendedPrivateArea(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
+		} else {
+			ptr = omrallocate_4K_pages_in_userExtendedPrivateArea(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
+		}
 
 		LP_DEBUG_PRINTF2("\t omrallocate_4K_pages_in_userExtendedPrivateArea(0x%zx) returned 0x%zx\n", \
 						 numSegments, ptr);
@@ -1241,7 +1248,7 @@ reserve4KPages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *
 #if defined(OMR_ENV_DATA64)
 	BOOLEAN use2To32GArea = (OMRPORT_VMEM_ZOS_USE2TO32G_AREA == (OMRPORT_VMEM_ZOS_USE2TO32G_AREA & params->options));
 
-	if (!use2To32GArea) {
+	if (!OMR_ARE_ANY_BITS_SET(params->mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED) && !use2To32GArea) {
 #endif /* OMR_ENV_DATA64 */
 		/* default_pageSize_reserve_memory will update the vmem identifier with the correct page size */
 		if (((uintptr_t)params->endAddress <= FOUR_GIG_LIMIT) ||

@@ -345,7 +345,7 @@ void *omrallocate_4K_pages_guarded_in_userExtendedPrivateArea(int *numMBSegments
 		break;
 	case ZOS64_VMEM_2_TO_64G:
 		__asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO64G=YES,"\
-				"GUARDSIZE=(%2),"\
+				"GUARDSIZE64=(%2),"\
 				"CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\
 				"SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\
 				::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(ttkn));
