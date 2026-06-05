@@ -526,7 +526,7 @@ OMRIARV64 RMODE ANY                                                      000000
 * #pragma prolog(omrallocate_4K_pages_guarded_in_userExtendedPrivateAre  000311
 * #pragma epilog(omrallocate_4K_pages_guarded_in_userExtendedPrivateAre  000312
 *                                                                        000313
-* __asm(" IARV64 PLISTVER=MAX,MF=(L,TGETSTOR)":"DS"(Tgetstor));          000314
+* __asm(" IARV64 PLISTVER=MAX,MF=(L,TGETSTOR)":"DS"(tgetstor));          000314
 *                                                                        000315
 * /*                                                                     000316
 *  * Allocate 4KB pages guarded in 2G-32G range using IARV64 system mac  000317
@@ -546,303 +546,301 @@ OMRIARV64 RMODE ANY                                                      000000
 *  __asm(" IARV64 PLISTVER=MAX,MF=(L,TGETSTOR)":"DS"(wgetstor));         000331
 *                                                                        000332
 *  segments = *numMBSegments;                                            000333
-*  wgetstor = mgetstor;                                                  000334
+*  wgetstor = tgetstor;                                                  000334
 *                                                                        000335
 *  switch (useMemoryType) {                                              000336
 *  case ZOS64_VMEM_ABOVE_BAR_GENERAL:                                    000337
 *   break;                                                               000338
 *  case ZOS64_VMEM_2_TO_32G:                                             000339
-*   __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO32G=YES,"\   000340
-*     "GUARDSIZE=(%2),"\                                                 000341
-*     "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\                                000342
-*     "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\    000343
-*     ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(t  000344
-*   break;                                                               000345
-*  case ZOS64_VMEM_2_TO_64G:                                             000346
-*   __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO64G=YES,"\   000347
-*     "GUARDSIZE=(%2),"\                                                 000348
-*     "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\                                000349
-*     "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\    000350
-*     ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(t  000351
-*   break;                                                               000352
-*  }                                                                     000353
-*                                                                        000354
-*  if (0 != iarv64_rc) {                                                 000355
-*   return (void *)0;                                                    000356
-*  }                                                                     000357
-*  return (void *)origin;                                                000358
-* }                                                                      000359
-*                                                                        000360
-* #pragma prolog(omrallocate_4K_pages_above_bar,"MYPROLOG")              000361
-* #pragma epilog(omrallocate_4K_pages_above_bar,"MYEPILOG")              000362
+*   __asm(" IARV64 REQUEST=GETSTOR,COND=NO,SADMP=NO,CONTROL=UNAUTH,USE2  000340
+*     "GUARDSIZE64=(%2),PAGEFRAMESIZE=4K,SEGMENTS=(%2),"\                000341
+*     "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\                  000342
+*     ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(t  000343
+*   break;                                                               000344
+*  case ZOS64_VMEM_2_TO_64G:                                             000345
+*   __asm(" IARV64 REQUEST=GETSTOR,COND=NO,SADMP=NO,CONTROL=UNAUTH,USE2  000346
+*     "GUARDSIZE64=(%2),PAGEFRAMESIZE=4K,SEGMENTS=(%2),"\                000347
+*     "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\                  000348
+*     ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(t  000349
+*   break;                                                               000350
+*  }                                                                     000351
+*                                                                        000352
+*  if (0 != iarv64_rc) {                                                 000353
+*   return (void *)0;                                                    000354
+*  }                                                                     000355
+*  return (void *)origin;                                                000356
+* }                                                                      000357
+*                                                                        000358
+* #pragma prolog(omrallocate_4K_pages_above_bar,"MYPROLOG")              000359
+* #pragma epilog(omrallocate_4K_pages_above_bar,"MYEPILOG")              000360
+*                                                                        000361
+* __asm(" IARV64 PLISTVER=MAX,MF=(L,RGETSTOR)":"DS"(rgetstor));          000362
 *                                                                        000363
-* __asm(" IARV64 PLISTVER=MAX,MF=(L,RGETSTOR)":"DS"(rgetstor));          000364
-*                                                                        000365
-* /*                                                                     000366
-*  * Allocate 4KB pages using IARV64 system macro.                       000367
-*  * Memory allocated is freed using omrfree_memory_above_bar().         000368
+* /*                                                                     000364
+*  * Allocate 4KB pages using IARV64 system macro.                       000365
+*  * Memory allocated is freed using omrfree_memory_above_bar().         000366
+*  *                                                                     000367
+*  * @params[in] numMBSegments Number of 1MB segments to be allocated    000368
 *  *                                                                     000369
-*  * @params[in] numMBSegments Number of 1MB segments to be allocated    000370
-*  *                                                                     000371
-*  * @return pointer to memory allocated, NULL on failure.               000372
-*  */                                                                    000373
-* void * omrallocate_4K_pages_above_bar(int *numMBSegments, const char   000374
-*  long segments;                                                        000375
-*  long origin;                                                          000376
-*  int  iarv64_rc = 0;                                                   000377
+*  * @return pointer to memory allocated, NULL on failure.               000370
+*  */                                                                    000371
+* void * omrallocate_4K_pages_above_bar(int *numMBSegments, const char   000372
+*  long segments;                                                        000373
+*  long origin;                                                          000374
+*  int  iarv64_rc = 0;                                                   000375
+*                                                                        000376
+*  __asm(" IARV64 PLISTVER=MAX,MF=(L,RGETSTOR)":"DS"(wgetstor));         000377
 *                                                                        000378
-*  __asm(" IARV64 PLISTVER=MAX,MF=(L,RGETSTOR)":"DS"(wgetstor));         000379
-*                                                                        000380
-*  segments = *numMBSegments;                                            000381
-*  wgetstor = rgetstor;                                                  000382
-*                                                                        000383
-*  __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,"\                   000384
-*    "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\                                 000385
-*    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\     000386
-*    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(tt  000387
-*                                                                        000388
-*  if (0 != iarv64_rc) {                                                 000389
-*   return (void *)0;                                                    000390
-*  }                                                                     000391
-*  return (void *)origin;                                                000392
-* }                                                                      000393
-*                                                                        000394
-* #pragma prolog(omrallocate_4K_pages_guarded_above_bar,"MYPROLOG")      000395
-* #pragma epilog(omrallocate_4K_pages_guarded_above_bar,"MYEPILOG")      000396
+*  segments = *numMBSegments;                                            000379
+*  wgetstor = rgetstor;                                                  000380
+*                                                                        000381
+*  __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,"\                   000382
+*    "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\                                 000383
+*    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\     000384
+*    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(tt  000385
+*                                                                        000386
+*  if (0 != iarv64_rc) {                                                 000387
+*   return (void *)0;                                                    000388
+*  }                                                                     000389
+*  return (void *)origin;                                                000390
+* }                                                                      000391
+*                                                                        000392
+* #pragma prolog(omrallocate_4K_pages_guarded_above_bar,"MYPROLOG")      000393
+* #pragma epilog(omrallocate_4K_pages_guarded_above_bar,"MYEPILOG")      000394
+*                                                                        000395
+* __asm(" IARV64 PLISTVER=MAX,MF=(L,EGETSTOR)":"DS"(egetstor));          000396
 *                                                                        000397
-* __asm(" IARV64 PLISTVER=MAX,MF=(L,EGETSTOR)":"DS"(egetstor));          000398
-*                                                                        000399
-* void *omrallocate_4K_pages_guarded_above_bar(int *numMBSegments, cons  000400
-*  long segments;                                                        000401
-*  long origin;                                                          000402
-*  int  iarv64_rc = 0;                                                   000403
+* void *omrallocate_4K_pages_guarded_above_bar(int *numMBSegments, cons  000398
+*  long segments;                                                        000399
+*  long origin;                                                          000400
+*  int  iarv64_rc = 0;                                                   000401
+*                                                                        000402
+*  __asm(" IARV64 PLISTVER=MAX,MF=(L,EGETSTOR)":"DS"(wgetstor));         000403
 *                                                                        000404
-*  __asm(" IARV64 PLISTVER=MAX,MF=(L,EGETSTOR)":"DS"(wgetstor));         000405
-*                                                                        000406
-*  segments = *numMBSegments;                                            000407
-*  wgetstor = rgetstor;                                                  000408
-*                                                                        000409
-*  __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,"\                   000410
-*    "GUARDSIZE=(%2),"\                                                  000411
-*    "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\                                 000412
-*    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\     000413
-*    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(tt  000414
-*                                                                        000415
-*  if (0 != iarv64_rc) {                                                 000416
-*   return (void *)0;                                                    000417
-*  }                                                                     000418
-*  return (void *)origin;                                                000419
-* }                                                                      000420
-*                                                                        000421
-* #pragma prolog(omrfree_memory_above_bar,"MYPROLOG")                    000422
-* #pragma epilog(omrfree_memory_above_bar,"MYEPILOG")                    000423
+*  segments = *numMBSegments;                                            000405
+*  wgetstor = rgetstor;                                                  000406
+*                                                                        000407
+*  __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,"\                   000408
+*    "GUARDSIZE=(%2),"\                                                  000409
+*    "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\                                 000410
+*    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\     000411
+*    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(tt  000412
+*                                                                        000413
+*  if (0 != iarv64_rc) {                                                 000414
+*   return (void *)0;                                                    000415
+*  }                                                                     000416
+*  return (void *)origin;                                                000417
+* }                                                                      000418
+*                                                                        000419
+* #pragma prolog(omrfree_memory_above_bar,"MYPROLOG")                    000420
+* #pragma epilog(omrfree_memory_above_bar,"MYEPILOG")                    000421
+*                                                                        000422
+* __asm(" IARV64 PLISTVER=MAX,MF=(L,PGETSTOR)":"DS"(pgetstor));          000423
 *                                                                        000424
-* __asm(" IARV64 PLISTVER=MAX,MF=(L,PGETSTOR)":"DS"(pgetstor));          000425
-*                                                                        000426
-* /*                                                                     000427
-*  * Free memory allocated using IARV64 system macro.                    000428
+* /*                                                                     000425
+*  * Free memory allocated using IARV64 system macro.                    000426
+*  *                                                                     000427
+*  * @params[in] address pointer to memory region to be freed            000428
 *  *                                                                     000429
-*  * @params[in] address pointer to memory region to be freed            000430
-*  *                                                                     000431
-*  * @return non-zero if memory is not freed successfully, 0 otherwise.  000432
-*  */                                                                    000433
-* int omrfree_memory_above_bar(void *address, const char * ttkn){        000434
-*  void * xmemobjstart;                                                  000435
-*  int  iarv64_rc = 0;                                                   000436
+*  * @return non-zero if memory is not freed successfully, 0 otherwise.  000430
+*  */                                                                    000431
+* int omrfree_memory_above_bar(void *address, const char * ttkn){        000432
+*  void * xmemobjstart;                                                  000433
+*  int  iarv64_rc = 0;                                                   000434
+*                                                                        000435
+*  __asm(" IARV64 PLISTVER=MAX,MF=(L,PGETSTOR)":"DS"(wgetstor));         000436
 *                                                                        000437
-*  __asm(" IARV64 PLISTVER=MAX,MF=(L,PGETSTOR)":"DS"(wgetstor));         000438
-*                                                                        000439
-*  xmemobjstart = address;                                               000440
-*  wgetstor = pgetstor;                                                  000441
-*                                                                        000442
-*  __asm(" IARV64 REQUEST=DETACH,COND=YES,MEMOBJSTART=(%2),TTOKEN=(%3),  000443
-*    ::"m"(iarv64_rc),"r"(&wgetstor),"r"(&xmemobjstart),"r"(ttkn));      000444
-*  return iarv64_rc;                                                     000445
-* }                                                                      000446
-*                                                                        000447
-* #pragma prolog(omrremove_guard,"MYPROLOG")                             000448
-* #pragma epilog(omrremove_guard,"MYEPILOG")                             000449
+*  xmemobjstart = address;                                               000438
+*  wgetstor = pgetstor;                                                  000439
+*                                                                        000440
+*  __asm(" IARV64 REQUEST=DETACH,COND=YES,MEMOBJSTART=(%2),TTOKEN=(%3),  000441
+*    ::"m"(iarv64_rc),"r"(&wgetstor),"r"(&xmemobjstart),"r"(ttkn));      000442
+*  return iarv64_rc;                                                     000443
+* }                                                                      000444
+*                                                                        000445
+* #pragma prolog(omrremove_guard,"MYPROLOG")                             000446
+* #pragma epilog(omrremove_guard,"MYEPILOG")                             000447
+*                                                                        000448
+* __asm(" IARV64 PLISTVER=MAX,MF=(L,FGETSTOR)":"DS"(fgetstor));          000449
 *                                                                        000450
-* __asm(" IARV64 PLISTVER=MAX,MF=(L,FGETSTOR)":"DS"(fgetstor));          000451
-*                                                                        000452
-* /*                                                                     000453
-*  * Remove guard for memory allocated using IARV64 system macro.        000454
-*  *                                                                     000455
-*  * @params[in] address pointer to memory region to be freed            000456
-*   * @params[in] numMBSegments Number of 1MB segments to be allocated   000457
-*  *                                                                     000458
-*  * @return non-zero if memory is not freed successfully, 0 otherwise.  000459
-*  */                                                                    000460
-* int omrremove_guard(void *address, int *numMBSegments){                000461
-*  void * memObjConvertStart;                                            000462
-*  int  iarv64_rc = 0;                                                   000463
-*  long segments;                                                        000464
+* /*                                                                     000451
+*  * Remove guard for memory allocated using IARV64 system macro.        000452
+*  *                                                                     000453
+*  * @params[in] address pointer to memory region to be freed            000454
+*   * @params[in] numMBSegments Number of 1MB segments to be allocated   000455
+*  *                                                                     000456
+*  * @return non-zero if memory is not freed successfully, 0 otherwise.  000457
+*  */                                                                    000458
+* int omrremove_guard(void *address, int *numMBSegments){                000459
+*  void * memObjConvertStart;                                            000460
+*  int  iarv64_rc = 0;                                                   000461
+*  long segments;                                                        000462
+*                                                                        000463
+*  __asm(" IARV64 PLISTVER=MAX,MF=(L,FGETSTOR)":"DS"(wgetstor));         000464
 *                                                                        000465
-*  __asm(" IARV64 PLISTVER=MAX,MF=(L,FGETSTOR)":"DS"(wgetstor));         000466
-*                                                                        000467
-*  memObjConvertStart = address;                                         000468
-*  wgetstor = fgetstor;                                                  000469
-*  segments = *numMBSegments;                                            000470
-*                                                                        000471
-*  __asm(" IARV64 REQUEST=CHANGEGUARD,CONVERT=FROMGUARD,COND=YES,"\      000472
-*    "CONVERTSTART=(%2),CONVERTSIZE64=(%3),"\                            000473
-*    "RETCODE=%0,MF=(E,(%1))"\                                           000474
-*    ::"m"(iarv64_rc),"r"(&wgetstor),"r"(&memObjConvertStart),"r"(&segm  000475
-*  return iarv64_rc;                                                     000476
-* }                                                                      000477
-*                                                                        000478
-* #pragma prolog(omradd_guard,"MYPROLOG")                                000479
-* #pragma epilog(omradd_guard,"MYEPILOG")                                000480
+*  memObjConvertStart = address;                                         000466
+*  wgetstor = fgetstor;                                                  000467
+*  segments = *numMBSegments;                                            000468
+*                                                                        000469
+*  __asm(" IARV64 REQUEST=CHANGEGUARD,CONVERT=FROMGUARD,COND=YES,"\      000470
+*    "CONVERTSTART=(%2),CONVERTSIZE64=(%3),"\                            000471
+*    "RETCODE=%0,MF=(E,(%1))"\                                           000472
+*    ::"m"(iarv64_rc),"r"(&wgetstor),"r"(&memObjConvertStart),"r"(&segm  000473
+*  return iarv64_rc;                                                     000474
+* }                                                                      000475
+*                                                                        000476
+* #pragma prolog(omradd_guard,"MYPROLOG")                                000477
+* #pragma epilog(omradd_guard,"MYEPILOG")                                000478
+*                                                                        000479
+* __asm(" IARV64 PLISTVER=MAX,MF=(L,DGETSTOR)":"DS"(dgetstor));          000480
 *                                                                        000481
-* __asm(" IARV64 PLISTVER=MAX,MF=(L,DGETSTOR)":"DS"(dgetstor));          000482
-*                                                                        000483
-* /*                                                                     000484
-*  * Ass guard to memory allocated using IARV64 system macro.            000485
+* /*                                                                     000482
+*  * Ass guard to memory allocated using IARV64 system macro.            000483
+*  *                                                                     000484
+*  * @params[in] address pointer to memory region to be freed            000485
 *  *                                                                     000486
-*  * @params[in] address pointer to memory region to be freed            000487
-*  *                                                                     000488
-*  * @return non-zero if memory is not freed successfully, 0 otherwise.  000489
-*  */                                                                    000490
-* int omradd_guard(void *address, int *numMBSegments) {                  000491
-*  void * memObjConvertStart;                                            000492
-*  int  iarv64_rc = 0;                                                   000493
-*  long segments;                                                        000494
+*  * @return non-zero if memory is not freed successfully, 0 otherwise.  000487
+*  */                                                                    000488
+* int omradd_guard(void *address, int *numMBSegments) {                  000489
+*  void * memObjConvertStart;                                            000490
+*  int  iarv64_rc = 0;                                                   000491
+*  long segments;                                                        000492
+*                                                                        000493
+*  __asm(" IARV64 PLISTVER=MAX,MF=(L,DGETSTOR)":"DS"(wgetstor));         000494
 *                                                                        000495
-*  __asm(" IARV64 PLISTVER=MAX,MF=(L,DGETSTOR)":"DS"(wgetstor));         000496
-*                                                                        000497
-*  memObjConvertStart = address;                                         000498
-*  wgetstor = dgetstor;                                                  000499
-*  segments = *numMBSegments;                                            000500
-*                                                                        000501
-*  __asm(" IARV64 REQUEST=CHANGEGUARD,CONVERT=TOGUARD,COND=YES,"\        000502
-*    "CONVERTSTART=(%2),CONVERTSIZE64=(%3),"\                            000503
-*    "RETCODE=%0,MF=(E,(%1))"\                                           000504
-*    ::"m"(iarv64_rc),"r"(&wgetstor),"r"(&memObjConvertStart),"r"(&segm  000505
-*  return iarv64_rc;                                                     000506
-* }                                                                      000507
-*                                                                        000508
-* #pragma prolog(omrdiscard_data,"MYPROLOG")                             000509
-* #pragma epilog(omrdiscard_data,"MYEPILOG")                             000510
+*  memObjConvertStart = address;                                         000496
+*  wgetstor = dgetstor;                                                  000497
+*  segments = *numMBSegments;                                            000498
+*                                                                        000499
+*  __asm(" IARV64 REQUEST=CHANGEGUARD,CONVERT=TOGUARD,COND=YES,"\        000500
+*    "CONVERTSTART=(%2),CONVERTSIZE64=(%3),"\                            000501
+*    "RETCODE=%0,MF=(E,(%1))"\                                           000502
+*    ::"m"(iarv64_rc),"r"(&wgetstor),"r"(&memObjConvertStart),"r"(&segm  000503
+*  return iarv64_rc;                                                     000504
+* }                                                                      000505
+*                                                                        000506
+* #pragma prolog(omrdiscard_data,"MYPROLOG")                             000507
+* #pragma epilog(omrdiscard_data,"MYEPILOG")                             000508
+*                                                                        000509
+* __asm(" IARV64 PLISTVER=MAX,MF=(L,QGETSTOR)":"DS"(qgetstor));          000510
 *                                                                        000511
-* __asm(" IARV64 PLISTVER=MAX,MF=(L,QGETSTOR)":"DS"(qgetstor));          000512
-*                                                                        000513
-* /* Used to pass parameters to IARV64 DISCARDDATA in omrdiscard_data()  000514
-* struct rangeList {                                                     000515
-*  void *startAddr;                                                      000516
-*  long pageCount;                                                       000517
-* };                                                                     000518
-*                                                                        000519
-* /*                                                                     000520
-*  * Discard memory allocated using IARV64 system macro.                 000521
-*  *                                                                     000522
-*  * @params[in] address pointer to memory region to be discarded        000523
-*  * @params[in] numFrames number of frames to be discarded. Frame size  000524
-*  *                                                                     000525
-*  * @return non-zero if memory is not discarded successfully, 0 otherw  000526
-*  */                                                                    000527
-* int omrdiscard_data(void *address, int *numFrames) {                   000528
-         J     @@CCN@113                                                 000528
-@@PFD@@  DC    XL8'00C300C300D50000'   Prefix Data Marker                000528
-         DC    CL8'20260206'           Compiled Date YYYYMMDD            000528
-         DC    CL6'102530'             Compiled Time HHMMSS              000528
-         DC    XL4'42040000'           Compiler Version                  000528
-         DC    XL2'0000'               Reserved                          000528
-         DC    BL1'00000000'           Flag Set 1                        000528
-         DC    BL1'00000000'           Flag Set 2                        000528
-         DC    BL1'00000000'           Flag Set 3                        000528
-         DC    BL1'00000000'           Flag Set 4                        000528
-         DC    XL4'00000000'           Reserved                          000528
-         ENTRY @@CCN@113                                                 000528
-@@CCN@113 AMODE 64                                                       000528
-         DC    0FD                                                       000528
-         DC    XL8'00C300C300D50100'   Function Entry Point Marker       000528
-         DC    A(@@FPB@1-*+8)          Signed offset to FPB              000528
-         DC    XL4'00000000'           Reserved                          000528
-@@CCN@113 DS   0FD                                                       000528
-&CCN_PRCN SETC '@@CCN@113'                                               000528
-&CCN_PRCN_LONG SETC 'omrdiscard_data'                                    000528
-&CCN_LITN SETC '@@LIT@1'                                                 000528
-&CCN_BEGIN SETC '@@BGN@1'                                                000528
-&CCN_ASCM SETC 'P'                                                       000528
-&CCN_DSASZ SETA 472                                                      000528
-&CCN_SASZ SETA 144                                                       000528
-&CCN_ARGS SETA 2                                                         000528
-&CCN_RLOW SETA 14                                                        000528
-&CCN_RHIGH SETA 4                                                        000528
-&CCN_NAB SETB  0                                                         000528
-&CCN_MAIN SETB 0                                                         000528
-&CCN_NAB_STORED SETB 0                                                   000528
-&CCN_STATIC SETB 0                                                       000528
-&CCN_ALTGPR(1) SETB 1                                                    000528
-&CCN_ALTGPR(2) SETB 1                                                    000528
-&CCN_ALTGPR(3) SETB 1                                                    000528
-&CCN_ALTGPR(4) SETB 1                                                    000528
-&CCN_ALTGPR(5) SETB 1                                                    000528
-&CCN_ALTGPR(6) SETB 0                                                    000528
-&CCN_ALTGPR(7) SETB 0                                                    000528
-&CCN_ALTGPR(8) SETB 0                                                    000528
-&CCN_ALTGPR(9) SETB 0                                                    000528
-&CCN_ALTGPR(10) SETB 0                                                   000528
-&CCN_ALTGPR(11) SETB 0                                                   000528
-&CCN_ALTGPR(12) SETB 0                                                   000528
-&CCN_ALTGPR(13) SETB 0                                                   000528
-&CCN_ALTGPR(14) SETB 1                                                   000528
-&CCN_ALTGPR(15) SETB 1                                                   000528
-&CCN_ALTGPR(16) SETB 1                                                   000528
-         MYPROLOG                                                        000528
-@@BGN@1  DS    0H                                                        000528
-         AIF   (NOT &CCN_SASIG).@@NOSIG1                                 000528
-         LLILH 4,X'C6F4'                                                 000528
-         OILL  4,X'E2C1'                                                 000528
-         ST    4,4(,13)                                                  000528
-.@@NOSIG1 ANOP                                                           000528
-         USING @@AUTO@1,13                                               000528
-         LARL  3,@@LIT@1                                                 000528
-         USING @@LIT@1,3                                                 000528
-         STG   1,464(0,13)             #SR_PARM_1                        000528
-*  struct rangeList range;                                               000529
-*  void *rangePtr;                                                       000530
-*  int iarv64_rc = 0;                                                    000531
-         MVHI  @117iarv64_rc@67,0                                        000531
+* /* Used to pass parameters to IARV64 DISCARDDATA in omrdiscard_data()  000512
+* struct rangeList {                                                     000513
+*  void *startAddr;                                                      000514
+*  long pageCount;                                                       000515
+* };                                                                     000516
+*                                                                        000517
+* /*                                                                     000518
+*  * Discard memory allocated using IARV64 system macro.                 000519
+*  *                                                                     000520
+*  * @params[in] address pointer to memory region to be discarded        000521
+*  * @params[in] numFrames number of frames to be discarded. Frame size  000522
+*  *                                                                     000523
+*  * @return non-zero if memory is not discarded successfully, 0 otherw  000524
+*  */                                                                    000525
+* int omrdiscard_data(void *address, int *numFrames) {                   000526
+         J     @@CCN@113                                                 000526
+@@PFD@@  DC    XL8'00C300C300D50000'   Prefix Data Marker                000526
+         DC    CL8'20260605'           Compiled Date YYYYMMDD            000526
+         DC    CL6'123330'             Compiled Time HHMMSS              000526
+         DC    XL4'42040000'           Compiler Version                  000526
+         DC    XL2'0000'               Reserved                          000526
+         DC    BL1'00000000'           Flag Set 1                        000526
+         DC    BL1'00000000'           Flag Set 2                        000526
+         DC    BL1'00000000'           Flag Set 3                        000526
+         DC    BL1'00000000'           Flag Set 4                        000526
+         DC    XL4'00000000'           Reserved                          000526
+         ENTRY @@CCN@113                                                 000526
+@@CCN@113 AMODE 64                                                       000526
+         DC    0FD                                                       000526
+         DC    XL8'00C300C300D50100'   Function Entry Point Marker       000526
+         DC    A(@@FPB@1-*+8)          Signed offset to FPB              000526
+         DC    XL4'00000000'           Reserved                          000526
+@@CCN@113 DS   0FD                                                       000526
+&CCN_PRCN SETC '@@CCN@113'                                               000526
+&CCN_PRCN_LONG SETC 'omrdiscard_data'                                    000526
+&CCN_LITN SETC '@@LIT@1'                                                 000526
+&CCN_BEGIN SETC '@@BGN@1'                                                000526
+&CCN_ASCM SETC 'P'                                                       000526
+&CCN_DSASZ SETA 472                                                      000526
+&CCN_SASZ SETA 144                                                       000526
+&CCN_ARGS SETA 2                                                         000526
+&CCN_RLOW SETA 14                                                        000526
+&CCN_RHIGH SETA 4                                                        000526
+&CCN_NAB SETB  0                                                         000526
+&CCN_MAIN SETB 0                                                         000526
+&CCN_NAB_STORED SETB 0                                                   000526
+&CCN_STATIC SETB 0                                                       000526
+&CCN_ALTGPR(1) SETB 1                                                    000526
+&CCN_ALTGPR(2) SETB 1                                                    000526
+&CCN_ALTGPR(3) SETB 1                                                    000526
+&CCN_ALTGPR(4) SETB 1                                                    000526
+&CCN_ALTGPR(5) SETB 1                                                    000526
+&CCN_ALTGPR(6) SETB 0                                                    000526
+&CCN_ALTGPR(7) SETB 0                                                    000526
+&CCN_ALTGPR(8) SETB 0                                                    000526
+&CCN_ALTGPR(9) SETB 0                                                    000526
+&CCN_ALTGPR(10) SETB 0                                                   000526
+&CCN_ALTGPR(11) SETB 0                                                   000526
+&CCN_ALTGPR(12) SETB 0                                                   000526
+&CCN_ALTGPR(13) SETB 0                                                   000526
+&CCN_ALTGPR(14) SETB 1                                                   000526
+&CCN_ALTGPR(15) SETB 1                                                   000526
+&CCN_ALTGPR(16) SETB 1                                                   000526
+         MYPROLOG                                                        000526
+@@BGN@1  DS    0H                                                        000526
+         AIF   (NOT &CCN_SASIG).@@NOSIG1                                 000526
+         LLILH 4,X'C6F4'                                                 000526
+         OILL  4,X'E2C1'                                                 000526
+         ST    4,4(,13)                                                  000526
+.@@NOSIG1 ANOP                                                           000526
+         USING @@AUTO@1,13                                               000526
+         LARL  3,@@LIT@1                                                 000526
+         USING @@LIT@1,3                                                 000526
+         STG   1,464(0,13)             #SR_PARM_1                        000526
+*  struct rangeList range;                                               000527
+*  void *rangePtr;                                                       000528
+*  int iarv64_rc = 0;                                                    000529
+         MVHI  @117iarv64_rc@67,0                                        000529
+*                                                                        000530
+*  __asm(" IARV64 PLISTVER=MAX,MF=(L,MGETSTOR)":"DS"(wgetstor));         000531
 *                                                                        000532
-*  __asm(" IARV64 PLISTVER=MAX,MF=(L,MGETSTOR)":"DS"(wgetstor));         000533
-*                                                                        000534
-*  range.startAddr = address;                                            000535
-         LG    14,464(0,13)            #SR_PARM_1                        000535
-         USING @@PARMD@1,14                                              000535
-         LG    14,@114address@65                                         000535
-         STG   14,176(0,13)            range_rangeList_startAddr         000535
-*  range.pageCount = *numFrames;                                         000536
-         LG    14,464(0,13)            #SR_PARM_1                        000536
-         LG    14,@115numFrames                                          000536
-         LGF   14,0(0,14)              (*)int                            000536
-         STG   14,184(0,13)            range_rangeList_pageCount         000536
-*  rangePtr = (void *)&range;                                            000537
-         LA    14,@119range                                              000537
-         STG   14,@122rangePtr                                           000537
-*  wgetstor = qgetstor;                                                  000538
-         LARL  14,$STATIC                                                000538
+*  range.startAddr = address;                                            000533
+         LG    14,464(0,13)            #SR_PARM_1                        000533
+         USING @@PARMD@1,14                                              000533
+         LG    14,@114address@65                                         000533
+         STG   14,176(0,13)            range_rangeList_startAddr         000533
+*  range.pageCount = *numFrames;                                         000534
+         LG    14,464(0,13)            #SR_PARM_1                        000534
+         LG    14,@115numFrames                                          000534
+         LGF   14,0(0,14)              (*)int                            000534
+         STG   14,184(0,13)            range_rangeList_pageCount         000534
+*  rangePtr = (void *)&range;                                            000535
+         LA    14,@119range                                              000535
+         STG   14,@122rangePtr                                           000535
+*  wgetstor = qgetstor;                                                  000536
+         LARL  14,$STATIC                                                000536
+         DROP  14                                                        000536
+         USING @@STATICD@@,14                                            000536
+         MVC   @118wgetstor,@112qgetstor                                 000536
+*                                                                        000537
+*  __asm(" IARV64 REQUEST=DISCARDDATA,KEEPREAL=NO,"\                     000538
+         LA    2,@122rangePtr                                            000538
          DROP  14                                                        000538
-         USING @@STATICD@@,14                                            000538
-         MVC   @118wgetstor,@112qgetstor                                 000538
-*                                                                        000539
-*  __asm(" IARV64 REQUEST=DISCARDDATA,KEEPREAL=NO,"\                     000540
-         LA    2,@122rangePtr                                            000540
-         DROP  14                                                        000540
-         LA    4,@118wgetstor                                            000540
-         IARV64 REQUEST=DISCARDDATA,KEEPREAL=NO,RANGLIST=(2),RETCODE=20X 000540
-               0(13),MF=(E,(4))                                          000540
-*    "RANGLIST=(%1),RETCODE=%0,MF=(E,(%2))"\                             000541
-*    ::"m"(iarv64_rc),"r"(&rangePtr),"r"(&wgetstor));                    000542
-*                                                                        000543
-*  return iarv64_rc;                                                     000544
-         LGF   15,@117iarv64_rc@67                                       000544
-* }                                                                      000545
-@1L37    DS    0H                                                        000545
-         DROP                                                            000545
-         MYEPILOG                                                        000545
-OMRIARV64 CSECT ,                                                        000545
-         DS    0FD                                                       000545
+         LA    4,@118wgetstor                                            000538
+         IARV64 REQUEST=DISCARDDATA,KEEPREAL=NO,RANGLIST=(2),RETCODE=20X 000538
+               0(13),MF=(E,(4))                                          000538
+*    "RANGLIST=(%1),RETCODE=%0,MF=(E,(%2))"\                             000539
+*    ::"m"(iarv64_rc),"r"(&rangePtr),"r"(&wgetstor));                    000540
+*                                                                        000541
+*  return iarv64_rc;                                                     000542
+         LGF   15,@117iarv64_rc@67                                       000542
+* }                                                                      000543
+@1L37    DS    0H                                                        000543
+         DROP                                                            000543
+         MYEPILOG                                                        000543
+OMRIARV64 CSECT ,                                                        000543
+         DS    0FD                                                       000543
 @@LIT@1  LTORG                                                           000000
 @@FPB@   LOCTR                                                           000000
 @@FPB@1  DS    0FD                     Function Property Block           000000
@@ -1953,11 +1951,11 @@ OMRIARV64 CSECT ,                                                        000000
          LG    14,@59numMBSegments@31                                    000333
          LGF   14,0(0,14)              (*)int                            000333
          STG   14,@66segments@35                                         000333
-*  wgetstor = mgetstor;                                                  000334
+*  wgetstor = tgetstor;                                                  000334
          LARL  14,$STATIC                                                000334
          DROP  14                                                        000334
          USING @@STATICD@@,14                                            000334
-         MVC   @65wgetstor,@46mgetstor                                   000334
+         MVC   @65wgetstor,@57tgetstor                                   000334
 *                                                                        000335
 *  switch (useMemoryType) {                                              000336
          LG    14,@63useMemoryType@37                                    000336
@@ -1977,7 +1975,7 @@ OMRIARV64 CSECT ,                                                        000000
 @7L39    DS    0H                                                        000338
          BRU   @7L30                                                     000338
 *  case ZOS64_VMEM_2_TO_32G:                                             000339
-*   __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO32G=YES,"\   000340
+*   __asm(" IARV64 REQUEST=GETSTOR,COND=NO,SADMP=NO,CONTROL=UNAUTH,USE2  000340
 @7L40    DS    0H                                                        000340
          LA    2,@67origin@36                                            000340
          DROP  14                                                        000340
@@ -1986,52 +1984,50 @@ OMRIARV64 CSECT ,                                                        000000
          LG    14,464(0,13)            #SR_PARM_7                        000340
          USING @@PARMD@7,14                                              000340
          LG    6,@61ttkn@33                                              000340
-         IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO32G=YES,GUARDSX 000340
-               IZE=(4),CONTROL=UNAUTH,PAGEFRAMESIZE=4K,SEGMENTS=(4),ORIX 000340
-               GIN=(2),TTOKEN=(6),RETCODE=200(13),MF=(E,(5))             000340
-*     "GUARDSIZE=(%2),"\                                                 000341
-*     "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\                                000342
-*     "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\    000343
-*     ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(t  000344
-*   break;                                                               000345
-         BRU   @7L30                                                     000345
-*  case ZOS64_VMEM_2_TO_64G:                                             000346
-*   __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO64G=YES,"\   000347
-@7L41    DS    0H                                                        000347
-         LA    2,@67origin@36                                            000347
-         LA    4,@66segments@35                                          000347
-         LA    5,@65wgetstor                                             000347
-         LG    14,464(0,13)            #SR_PARM_7                        000347
-         LG    6,@61ttkn@33                                              000347
-         IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,USE2GTO64G=YES,GUARDSX 000347
-               IZE=(4),CONTROL=UNAUTH,PAGEFRAMESIZE=4K,SEGMENTS=(4),ORIX 000347
-               GIN=(2),TTOKEN=(6),RETCODE=200(13),MF=(E,(5))             000347
-*     "GUARDSIZE=(%2),"\                                                 000348
-*     "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\                                000349
-*     "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\    000350
-*     ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(t  000351
-*   break;                                                               000352
+         IARV64 REQUEST=GETSTOR,COND=NO,SADMP=NO,CONTROL=UNAUTH,USE2GTOX 000340
+               32G=YES,GUARDSIZE64=(4),PAGEFRAMESIZE=4K,SEGMENTS=(4),ORX 000340
+               IGIN=(2),TTOKEN=(6),RETCODE=200(13),MF=(E,(5))            000340
+*     "GUARDSIZE64=(%2),PAGEFRAMESIZE=4K,SEGMENTS=(%2),"\                000341
+*     "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\                  000342
+*     ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(t  000343
+*   break;                                                               000344
+         BRU   @7L30                                                     000344
+*  case ZOS64_VMEM_2_TO_64G:                                             000345
+*   __asm(" IARV64 REQUEST=GETSTOR,COND=NO,SADMP=NO,CONTROL=UNAUTH,USE2  000346
+@7L41    DS    0H                                                        000346
+         LA    2,@67origin@36                                            000346
+         LA    4,@66segments@35                                          000346
+         LA    5,@65wgetstor                                             000346
+         LG    14,464(0,13)            #SR_PARM_7                        000346
+         LG    6,@61ttkn@33                                              000346
+         IARV64 REQUEST=GETSTOR,COND=NO,SADMP=NO,CONTROL=UNAUTH,USE2GTOX 000346
+               64G=YES,GUARDSIZE64=(4),PAGEFRAMESIZE=4K,SEGMENTS=(4),ORX 000346
+               IGIN=(2),TTOKEN=(6),RETCODE=200(13),MF=(E,(5))            000346
+*     "GUARDSIZE64=(%2),PAGEFRAMESIZE=4K,SEGMENTS=(%2),"\                000347
+*     "ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\                  000348
+*     ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(t  000349
+*   break;                                                               000350
 @7L30    DS    0H                                                        000336
 @7L43    DS    0H                                                        000000
-*  }                                                                     000353
-*                                                                        000354
-*  if (0 != iarv64_rc) {                                                 000355
-         LGF   14,@64iarv64_rc@38                                        000355
-         LTR   14,14                                                     000355
-         BRE   @7L9                                                      000355
-*   return (void *)0;                                                    000356
-         LGHI  15,0                                                      000356
-         BRU   @7L31                                                     000356
-@7L9     DS    0H                                                        000356
-*  }                                                                     000357
-*  return (void *)origin;                                                000358
-         LG    15,@67origin@36                                           000358
-* }                                                                      000359
-@7L31    DS    0H                                                        000359
-         DROP                                                            000359
-         MYEPILOG                                                        000359
-OMRIARV64 CSECT ,                                                        000359
-         DS    0FD                                                       000359
+*  }                                                                     000351
+*                                                                        000352
+*  if (0 != iarv64_rc) {                                                 000353
+         LGF   14,@64iarv64_rc@38                                        000353
+         LTR   14,14                                                     000353
+         BRE   @7L9                                                      000353
+*   return (void *)0;                                                    000354
+         LGHI  15,0                                                      000354
+         BRU   @7L31                                                     000354
+@7L9     DS    0H                                                        000354
+*  }                                                                     000355
+*  return (void *)origin;                                                000356
+         LG    15,@67origin@36                                           000356
+* }                                                                      000357
+@7L31    DS    0H                                                        000357
+         DROP                                                            000357
+         MYEPILOG                                                        000357
+OMRIARV64 CSECT ,                                                        000357
+         DS    0FD                                                       000357
 @@LIT@7  LTORG                                                           000000
 @@FPB@   LOCTR                                                           000000
 @@FPB@7  DS    0FD                     Function Property Block           000000
@@ -2079,106 +2075,106 @@ OMRIARV64 LOCTR                                                          000000
 @61ttkn@33 DS  0XL8                                                      000000
          EJECT                                                           000000
 OMRIARV64 CSECT ,                                                        000000
-* void * omrallocate_4K_pages_above_bar(int *numMBSegments, const char   000374
-         ENTRY @@CCN@69                                                  000374
-@@CCN@69 AMODE 64                                                        000374
-         DC    0FD                                                       000374
-         DC    XL8'00C300C300D50100'   Function Entry Point Marker       000374
-         DC    A(@@FPB@6-*+8)          Signed offset to FPB              000374
-         DC    XL4'00000000'           Reserved                          000374
-@@CCN@69 DS    0FD                                                       000374
-&CCN_PRCN SETC '@@CCN@69'                                                000374
-&CCN_PRCN_LONG SETC 'omrallocate_4K_pages_above_bar'                     000374
-&CCN_LITN SETC '@@LIT@6'                                                 000374
-&CCN_BEGIN SETC '@@BGN@6'                                                000374
-&CCN_ASCM SETC 'P'                                                       000374
-&CCN_DSASZ SETA 464                                                      000374
-&CCN_SASZ SETA 144                                                       000374
-&CCN_ARGS SETA 2                                                         000374
-&CCN_RLOW SETA 14                                                        000374
-&CCN_RHIGH SETA 6                                                        000374
-&CCN_NAB SETB  0                                                         000374
-&CCN_MAIN SETB 0                                                         000374
-&CCN_NAB_STORED SETB 0                                                   000374
-&CCN_STATIC SETB 0                                                       000374
-&CCN_ALTGPR(1) SETB 1                                                    000374
-&CCN_ALTGPR(2) SETB 1                                                    000374
-&CCN_ALTGPR(3) SETB 1                                                    000374
-&CCN_ALTGPR(4) SETB 1                                                    000374
-&CCN_ALTGPR(5) SETB 1                                                    000374
-&CCN_ALTGPR(6) SETB 1                                                    000374
-&CCN_ALTGPR(7) SETB 1                                                    000374
-&CCN_ALTGPR(8) SETB 0                                                    000374
-&CCN_ALTGPR(9) SETB 0                                                    000374
-&CCN_ALTGPR(10) SETB 0                                                   000374
-&CCN_ALTGPR(11) SETB 0                                                   000374
-&CCN_ALTGPR(12) SETB 0                                                   000374
-&CCN_ALTGPR(13) SETB 0                                                   000374
-&CCN_ALTGPR(14) SETB 1                                                   000374
-&CCN_ALTGPR(15) SETB 1                                                   000374
-&CCN_ALTGPR(16) SETB 1                                                   000374
-         MYPROLOG                                                        000374
-@@BGN@6  DS    0H                                                        000374
-         AIF   (NOT &CCN_SASIG).@@NOSIG6                                 000374
-         LLILH 6,X'C6F4'                                                 000374
-         OILL  6,X'E2C1'                                                 000374
-         ST    6,4(,13)                                                  000374
-.@@NOSIG6 ANOP                                                           000374
-         USING @@AUTO@6,13                                               000374
-         LARL  3,@@LIT@6                                                 000374
-         USING @@LIT@6,3                                                 000374
-         STG   1,456(0,13)             #SR_PARM_6                        000374
-*  long segments;                                                        000375
-*  long origin;                                                          000376
-*  int  iarv64_rc = 0;                                                   000377
-         MVHI  @73iarv64_rc@44,0                                         000377
+* void * omrallocate_4K_pages_above_bar(int *numMBSegments, const char   000372
+         ENTRY @@CCN@69                                                  000372
+@@CCN@69 AMODE 64                                                        000372
+         DC    0FD                                                       000372
+         DC    XL8'00C300C300D50100'   Function Entry Point Marker       000372
+         DC    A(@@FPB@6-*+8)          Signed offset to FPB              000372
+         DC    XL4'00000000'           Reserved                          000372
+@@CCN@69 DS    0FD                                                       000372
+&CCN_PRCN SETC '@@CCN@69'                                                000372
+&CCN_PRCN_LONG SETC 'omrallocate_4K_pages_above_bar'                     000372
+&CCN_LITN SETC '@@LIT@6'                                                 000372
+&CCN_BEGIN SETC '@@BGN@6'                                                000372
+&CCN_ASCM SETC 'P'                                                       000372
+&CCN_DSASZ SETA 464                                                      000372
+&CCN_SASZ SETA 144                                                       000372
+&CCN_ARGS SETA 2                                                         000372
+&CCN_RLOW SETA 14                                                        000372
+&CCN_RHIGH SETA 6                                                        000372
+&CCN_NAB SETB  0                                                         000372
+&CCN_MAIN SETB 0                                                         000372
+&CCN_NAB_STORED SETB 0                                                   000372
+&CCN_STATIC SETB 0                                                       000372
+&CCN_ALTGPR(1) SETB 1                                                    000372
+&CCN_ALTGPR(2) SETB 1                                                    000372
+&CCN_ALTGPR(3) SETB 1                                                    000372
+&CCN_ALTGPR(4) SETB 1                                                    000372
+&CCN_ALTGPR(5) SETB 1                                                    000372
+&CCN_ALTGPR(6) SETB 1                                                    000372
+&CCN_ALTGPR(7) SETB 1                                                    000372
+&CCN_ALTGPR(8) SETB 0                                                    000372
+&CCN_ALTGPR(9) SETB 0                                                    000372
+&CCN_ALTGPR(10) SETB 0                                                   000372
+&CCN_ALTGPR(11) SETB 0                                                   000372
+&CCN_ALTGPR(12) SETB 0                                                   000372
+&CCN_ALTGPR(13) SETB 0                                                   000372
+&CCN_ALTGPR(14) SETB 1                                                   000372
+&CCN_ALTGPR(15) SETB 1                                                   000372
+&CCN_ALTGPR(16) SETB 1                                                   000372
+         MYPROLOG                                                        000372
+@@BGN@6  DS    0H                                                        000372
+         AIF   (NOT &CCN_SASIG).@@NOSIG6                                 000372
+         LLILH 6,X'C6F4'                                                 000372
+         OILL  6,X'E2C1'                                                 000372
+         ST    6,4(,13)                                                  000372
+.@@NOSIG6 ANOP                                                           000372
+         USING @@AUTO@6,13                                               000372
+         LARL  3,@@LIT@6                                                 000372
+         USING @@LIT@6,3                                                 000372
+         STG   1,456(0,13)             #SR_PARM_6                        000372
+*  long segments;                                                        000373
+*  long origin;                                                          000374
+*  int  iarv64_rc = 0;                                                   000375
+         MVHI  @73iarv64_rc@44,0                                         000375
+*                                                                        000376
+*  __asm(" IARV64 PLISTVER=MAX,MF=(L,RGETSTOR)":"DS"(wgetstor));         000377
 *                                                                        000378
-*  __asm(" IARV64 PLISTVER=MAX,MF=(L,RGETSTOR)":"DS"(wgetstor));         000379
-*                                                                        000380
-*  segments = *numMBSegments;                                            000381
-         LG    14,456(0,13)            #SR_PARM_6                        000381
-         USING @@PARMD@6,14                                              000381
-         LG    14,@70numMBSegments@39                                    000381
-         LGF   14,0(0,14)              (*)int                            000381
-         STG   14,@75segments@42                                         000381
-*  wgetstor = rgetstor;                                                  000382
-         LARL  14,$STATIC                                                000382
+*  segments = *numMBSegments;                                            000379
+         LG    14,456(0,13)            #SR_PARM_6                        000379
+         USING @@PARMD@6,14                                              000379
+         LG    14,@70numMBSegments@39                                    000379
+         LGF   14,0(0,14)              (*)int                            000379
+         STG   14,@75segments@42                                         000379
+*  wgetstor = rgetstor;                                                  000380
+         LARL  14,$STATIC                                                000380
+         DROP  14                                                        000380
+         USING @@STATICD@@,14                                            000380
+         MVC   @74wgetstor,@68rgetstor                                   000380
+*                                                                        000381
+*  __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,"\                   000382
+         LA    2,@76origin@43                                            000382
          DROP  14                                                        000382
-         USING @@STATICD@@,14                                            000382
-         MVC   @74wgetstor,@68rgetstor                                   000382
-*                                                                        000383
-*  __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,"\                   000384
-         LA    2,@76origin@43                                            000384
-         DROP  14                                                        000384
-         LA    4,@75segments@42                                          000384
-         LA    5,@74wgetstor                                             000384
-         LG    14,456(0,13)            #SR_PARM_6                        000384
-         USING @@PARMD@6,14                                              000384
-         LG    6,@71ttkn@40                                              000384
-         IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,PAGEFRX 000384
-               AMESIZE=4K,SEGMENTS=(4),ORIGIN=(2),TTOKEN=(6),RETCODE=19X 000384
-               2(13),MF=(E,(5))                                          000384
-*    "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\                                 000385
-*    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\     000386
-*    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(tt  000387
-*                                                                        000388
-*  if (0 != iarv64_rc) {                                                 000389
-         LGF   14,@73iarv64_rc@44                                        000389
-         LTR   14,14                                                     000389
-         BRE   @6L7                                                      000389
-*   return (void *)0;                                                    000390
-         LGHI  15,0                                                      000390
-         BRU   @6L32                                                     000390
-@6L7     DS    0H                                                        000390
-*  }                                                                     000391
-*  return (void *)origin;                                                000392
-         LG    15,@76origin@43                                           000392
-* }                                                                      000393
-@6L32    DS    0H                                                        000393
-         DROP                                                            000393
-         MYEPILOG                                                        000393
-OMRIARV64 CSECT ,                                                        000393
-         DS    0FD                                                       000393
+         LA    4,@75segments@42                                          000382
+         LA    5,@74wgetstor                                             000382
+         LG    14,456(0,13)            #SR_PARM_6                        000382
+         USING @@PARMD@6,14                                              000382
+         LG    6,@71ttkn@40                                              000382
+         IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,CONTROL=UNAUTH,PAGEFRX 000382
+               AMESIZE=4K,SEGMENTS=(4),ORIGIN=(2),TTOKEN=(6),RETCODE=19X 000382
+               2(13),MF=(E,(5))                                          000382
+*    "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\                                 000383
+*    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\     000384
+*    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(tt  000385
+*                                                                        000386
+*  if (0 != iarv64_rc) {                                                 000387
+         LGF   14,@73iarv64_rc@44                                        000387
+         LTR   14,14                                                     000387
+         BRE   @6L7                                                      000387
+*   return (void *)0;                                                    000388
+         LGHI  15,0                                                      000388
+         BRU   @6L32                                                     000388
+@6L7     DS    0H                                                        000388
+*  }                                                                     000389
+*  return (void *)origin;                                                000390
+         LG    15,@76origin@43                                           000390
+* }                                                                      000391
+@6L32    DS    0H                                                        000391
+         DROP                                                            000391
+         MYEPILOG                                                        000391
+OMRIARV64 CSECT ,                                                        000391
+         DS    0FD                                                       000391
 @@LIT@6  LTORG                                                           000000
 @@FPB@   LOCTR                                                           000000
 @@FPB@6  DS    0FD                     Function Property Block           000000
@@ -2220,107 +2216,107 @@ OMRIARV64 LOCTR                                                          000000
 @71ttkn@40 DS  0XL8                                                      000000
          EJECT                                                           000000
 OMRIARV64 CSECT ,                                                        000000
-* void *omrallocate_4K_pages_guarded_above_bar(int *numMBSegments, cons  000400
-         ENTRY @@CCN@78                                                  000400
-@@CCN@78 AMODE 64                                                        000400
-         DC    0FD                                                       000400
-         DC    XL8'00C300C300D50100'   Function Entry Point Marker       000400
-         DC    A(@@FPB@5-*+8)          Signed offset to FPB              000400
-         DC    XL4'00000000'           Reserved                          000400
-@@CCN@78 DS    0FD                                                       000400
-&CCN_PRCN SETC '@@CCN@78'                                                000400
-&CCN_PRCN_LONG SETC 'omrallocate_4K_pages_guarded_above_bar'             000400
-&CCN_LITN SETC '@@LIT@5'                                                 000400
-&CCN_BEGIN SETC '@@BGN@5'                                                000400
-&CCN_ASCM SETC 'P'                                                       000400
-&CCN_DSASZ SETA 464                                                      000400
-&CCN_SASZ SETA 144                                                       000400
-&CCN_ARGS SETA 2                                                         000400
-&CCN_RLOW SETA 14                                                        000400
-&CCN_RHIGH SETA 6                                                        000400
-&CCN_NAB SETB  0                                                         000400
-&CCN_MAIN SETB 0                                                         000400
-&CCN_NAB_STORED SETB 0                                                   000400
-&CCN_STATIC SETB 0                                                       000400
-&CCN_ALTGPR(1) SETB 1                                                    000400
-&CCN_ALTGPR(2) SETB 1                                                    000400
-&CCN_ALTGPR(3) SETB 1                                                    000400
-&CCN_ALTGPR(4) SETB 1                                                    000400
-&CCN_ALTGPR(5) SETB 1                                                    000400
-&CCN_ALTGPR(6) SETB 1                                                    000400
-&CCN_ALTGPR(7) SETB 1                                                    000400
-&CCN_ALTGPR(8) SETB 0                                                    000400
-&CCN_ALTGPR(9) SETB 0                                                    000400
-&CCN_ALTGPR(10) SETB 0                                                   000400
-&CCN_ALTGPR(11) SETB 0                                                   000400
-&CCN_ALTGPR(12) SETB 0                                                   000400
-&CCN_ALTGPR(13) SETB 0                                                   000400
-&CCN_ALTGPR(14) SETB 1                                                   000400
-&CCN_ALTGPR(15) SETB 1                                                   000400
-&CCN_ALTGPR(16) SETB 1                                                   000400
-         MYPROLOG                                                        000400
-@@BGN@5  DS    0H                                                        000400
-         AIF   (NOT &CCN_SASIG).@@NOSIG5                                 000400
-         LLILH 6,X'C6F4'                                                 000400
-         OILL  6,X'E2C1'                                                 000400
-         ST    6,4(,13)                                                  000400
-.@@NOSIG5 ANOP                                                           000400
-         USING @@AUTO@5,13                                               000400
-         LARL  3,@@LIT@5                                                 000400
-         USING @@LIT@5,3                                                 000400
-         STG   1,456(0,13)             #SR_PARM_5                        000400
-*  long segments;                                                        000401
-*  long origin;                                                          000402
-*  int  iarv64_rc = 0;                                                   000403
-         MVHI  @82iarv64_rc@50,0                                         000403
+* void *omrallocate_4K_pages_guarded_above_bar(int *numMBSegments, cons  000398
+         ENTRY @@CCN@78                                                  000398
+@@CCN@78 AMODE 64                                                        000398
+         DC    0FD                                                       000398
+         DC    XL8'00C300C300D50100'   Function Entry Point Marker       000398
+         DC    A(@@FPB@5-*+8)          Signed offset to FPB              000398
+         DC    XL4'00000000'           Reserved                          000398
+@@CCN@78 DS    0FD                                                       000398
+&CCN_PRCN SETC '@@CCN@78'                                                000398
+&CCN_PRCN_LONG SETC 'omrallocate_4K_pages_guarded_above_bar'             000398
+&CCN_LITN SETC '@@LIT@5'                                                 000398
+&CCN_BEGIN SETC '@@BGN@5'                                                000398
+&CCN_ASCM SETC 'P'                                                       000398
+&CCN_DSASZ SETA 464                                                      000398
+&CCN_SASZ SETA 144                                                       000398
+&CCN_ARGS SETA 2                                                         000398
+&CCN_RLOW SETA 14                                                        000398
+&CCN_RHIGH SETA 6                                                        000398
+&CCN_NAB SETB  0                                                         000398
+&CCN_MAIN SETB 0                                                         000398
+&CCN_NAB_STORED SETB 0                                                   000398
+&CCN_STATIC SETB 0                                                       000398
+&CCN_ALTGPR(1) SETB 1                                                    000398
+&CCN_ALTGPR(2) SETB 1                                                    000398
+&CCN_ALTGPR(3) SETB 1                                                    000398
+&CCN_ALTGPR(4) SETB 1                                                    000398
+&CCN_ALTGPR(5) SETB 1                                                    000398
+&CCN_ALTGPR(6) SETB 1                                                    000398
+&CCN_ALTGPR(7) SETB 1                                                    000398
+&CCN_ALTGPR(8) SETB 0                                                    000398
+&CCN_ALTGPR(9) SETB 0                                                    000398
+&CCN_ALTGPR(10) SETB 0                                                   000398
+&CCN_ALTGPR(11) SETB 0                                                   000398
+&CCN_ALTGPR(12) SETB 0                                                   000398
+&CCN_ALTGPR(13) SETB 0                                                   000398
+&CCN_ALTGPR(14) SETB 1                                                   000398
+&CCN_ALTGPR(15) SETB 1                                                   000398
+&CCN_ALTGPR(16) SETB 1                                                   000398
+         MYPROLOG                                                        000398
+@@BGN@5  DS    0H                                                        000398
+         AIF   (NOT &CCN_SASIG).@@NOSIG5                                 000398
+         LLILH 6,X'C6F4'                                                 000398
+         OILL  6,X'E2C1'                                                 000398
+         ST    6,4(,13)                                                  000398
+.@@NOSIG5 ANOP                                                           000398
+         USING @@AUTO@5,13                                               000398
+         LARL  3,@@LIT@5                                                 000398
+         USING @@LIT@5,3                                                 000398
+         STG   1,456(0,13)             #SR_PARM_5                        000398
+*  long segments;                                                        000399
+*  long origin;                                                          000400
+*  int  iarv64_rc = 0;                                                   000401
+         MVHI  @82iarv64_rc@50,0                                         000401
+*                                                                        000402
+*  __asm(" IARV64 PLISTVER=MAX,MF=(L,EGETSTOR)":"DS"(wgetstor));         000403
 *                                                                        000404
-*  __asm(" IARV64 PLISTVER=MAX,MF=(L,EGETSTOR)":"DS"(wgetstor));         000405
-*                                                                        000406
-*  segments = *numMBSegments;                                            000407
-         LG    14,456(0,13)            #SR_PARM_5                        000407
-         USING @@PARMD@5,14                                              000407
-         LG    14,@79numMBSegments@45                                    000407
-         LGF   14,0(0,14)              (*)int                            000407
-         STG   14,@84segments@48                                         000407
-*  wgetstor = rgetstor;                                                  000408
-         LARL  14,$STATIC                                                000408
+*  segments = *numMBSegments;                                            000405
+         LG    14,456(0,13)            #SR_PARM_5                        000405
+         USING @@PARMD@5,14                                              000405
+         LG    14,@79numMBSegments@45                                    000405
+         LGF   14,0(0,14)              (*)int                            000405
+         STG   14,@84segments@48                                         000405
+*  wgetstor = rgetstor;                                                  000406
+         LARL  14,$STATIC                                                000406
+         DROP  14                                                        000406
+         USING @@STATICD@@,14                                            000406
+         MVC   @83wgetstor,@68rgetstor                                   000406
+*                                                                        000407
+*  __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,"\                   000408
+         LA    2,@85origin@49                                            000408
          DROP  14                                                        000408
-         USING @@STATICD@@,14                                            000408
-         MVC   @83wgetstor,@68rgetstor                                   000408
-*                                                                        000409
-*  __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,"\                   000410
-         LA    2,@85origin@49                                            000410
-         DROP  14                                                        000410
-         LA    4,@84segments@48                                          000410
-         LA    5,@83wgetstor                                             000410
-         LG    14,456(0,13)            #SR_PARM_5                        000410
-         USING @@PARMD@5,14                                              000410
-         LG    6,@80ttkn@46                                              000410
-         IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,GUARDSIZE=(4),CONTROLX 000410
-               =UNAUTH,PAGEFRAMESIZE=4K,SEGMENTS=(4),ORIGIN=(2),TTOKEN=X 000410
-               (6),RETCODE=192(13),MF=(E,(5))                            000410
-*    "GUARDSIZE=(%2),"\                                                  000411
-*    "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\                                 000412
-*    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\     000413
-*    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(tt  000414
-*                                                                        000415
-*  if (0 != iarv64_rc) {                                                 000416
-         LGF   14,@82iarv64_rc@50                                        000416
-         LTR   14,14                                                     000416
-         BRE   @5L5                                                      000416
-*   return (void *)0;                                                    000417
-         LGHI  15,0                                                      000417
-         BRU   @5L33                                                     000417
-@5L5     DS    0H                                                        000417
-*  }                                                                     000418
-*  return (void *)origin;                                                000419
-         LG    15,@85origin@49                                           000419
-* }                                                                      000420
-@5L33    DS    0H                                                        000420
-         DROP                                                            000420
-         MYEPILOG                                                        000420
-OMRIARV64 CSECT ,                                                        000420
-         DS    0FD                                                       000420
+         LA    4,@84segments@48                                          000408
+         LA    5,@83wgetstor                                             000408
+         LG    14,456(0,13)            #SR_PARM_5                        000408
+         USING @@PARMD@5,14                                              000408
+         LG    6,@80ttkn@46                                              000408
+         IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,GUARDSIZE=(4),CONTROLX 000408
+               =UNAUTH,PAGEFRAMESIZE=4K,SEGMENTS=(4),ORIGIN=(2),TTOKEN=X 000408
+               (6),RETCODE=192(13),MF=(E,(5))                            000408
+*    "GUARDSIZE=(%2),"\                                                  000409
+*    "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\                                 000410
+*    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\     000411
+*    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(tt  000412
+*                                                                        000413
+*  if (0 != iarv64_rc) {                                                 000414
+         LGF   14,@82iarv64_rc@50                                        000414
+         LTR   14,14                                                     000414
+         BRE   @5L5                                                      000414
+*   return (void *)0;                                                    000415
+         LGHI  15,0                                                      000415
+         BRU   @5L33                                                     000415
+@5L5     DS    0H                                                        000415
+*  }                                                                     000416
+*  return (void *)origin;                                                000417
+         LG    15,@85origin@49                                           000417
+* }                                                                      000418
+@5L33    DS    0H                                                        000418
+         DROP                                                            000418
+         MYEPILOG                                                        000418
+OMRIARV64 CSECT ,                                                        000418
+         DS    0FD                                                       000418
 @@LIT@5  LTORG                                                           000000
 @@FPB@   LOCTR                                                           000000
 @@FPB@5  DS    0FD                     Function Property Block           000000
@@ -2362,90 +2358,90 @@ OMRIARV64 LOCTR                                                          000000
 @80ttkn@46 DS  0XL8                                                      000000
          EJECT                                                           000000
 OMRIARV64 CSECT ,                                                        000000
-* int omrfree_memory_above_bar(void *address, const char * ttkn){        000434
-         ENTRY @@CCN@87                                                  000434
-@@CCN@87 AMODE 64                                                        000434
-         DC    0FD                                                       000434
-         DC    XL8'00C300C300D50100'   Function Entry Point Marker       000434
-         DC    A(@@FPB@4-*+8)          Signed offset to FPB              000434
-         DC    XL4'00000000'           Reserved                          000434
-@@CCN@87 DS    0FD                                                       000434
-&CCN_PRCN SETC '@@CCN@87'                                                000434
-&CCN_PRCN_LONG SETC 'omrfree_memory_above_bar'                           000434
-&CCN_LITN SETC '@@LIT@4'                                                 000434
-&CCN_BEGIN SETC '@@BGN@4'                                                000434
-&CCN_ASCM SETC 'P'                                                       000434
-&CCN_DSASZ SETA 456                                                      000434
-&CCN_SASZ SETA 144                                                       000434
-&CCN_ARGS SETA 2                                                         000434
-&CCN_RLOW SETA 14                                                        000434
-&CCN_RHIGH SETA 5                                                        000434
-&CCN_NAB SETB  0                                                         000434
-&CCN_MAIN SETB 0                                                         000434
-&CCN_NAB_STORED SETB 0                                                   000434
-&CCN_STATIC SETB 0                                                       000434
-&CCN_ALTGPR(1) SETB 1                                                    000434
-&CCN_ALTGPR(2) SETB 1                                                    000434
-&CCN_ALTGPR(3) SETB 1                                                    000434
-&CCN_ALTGPR(4) SETB 1                                                    000434
-&CCN_ALTGPR(5) SETB 1                                                    000434
-&CCN_ALTGPR(6) SETB 1                                                    000434
-&CCN_ALTGPR(7) SETB 0                                                    000434
-&CCN_ALTGPR(8) SETB 0                                                    000434
-&CCN_ALTGPR(9) SETB 0                                                    000434
-&CCN_ALTGPR(10) SETB 0                                                   000434
-&CCN_ALTGPR(11) SETB 0                                                   000434
-&CCN_ALTGPR(12) SETB 0                                                   000434
-&CCN_ALTGPR(13) SETB 0                                                   000434
-&CCN_ALTGPR(14) SETB 1                                                   000434
-&CCN_ALTGPR(15) SETB 1                                                   000434
-&CCN_ALTGPR(16) SETB 1                                                   000434
-         MYPROLOG                                                        000434
-@@BGN@4  DS    0H                                                        000434
-         AIF   (NOT &CCN_SASIG).@@NOSIG4                                 000434
-         LLILH 5,X'C6F4'                                                 000434
-         OILL  5,X'E2C1'                                                 000434
-         ST    5,4(,13)                                                  000434
-.@@NOSIG4 ANOP                                                           000434
-         USING @@AUTO@4,13                                               000434
-         LARL  3,@@LIT@4                                                 000434
-         USING @@LIT@4,3                                                 000434
-         STG   1,448(0,13)             #SR_PARM_4                        000434
-*  void * xmemobjstart;                                                  000435
-*  int  iarv64_rc = 0;                                                   000436
-         MVHI  @91iarv64_rc@53,0                                         000436
+* int omrfree_memory_above_bar(void *address, const char * ttkn){        000432
+         ENTRY @@CCN@87                                                  000432
+@@CCN@87 AMODE 64                                                        000432
+         DC    0FD                                                       000432
+         DC    XL8'00C300C300D50100'   Function Entry Point Marker       000432
+         DC    A(@@FPB@4-*+8)          Signed offset to FPB              000432
+         DC    XL4'00000000'           Reserved                          000432
+@@CCN@87 DS    0FD                                                       000432
+&CCN_PRCN SETC '@@CCN@87'                                                000432
+&CCN_PRCN_LONG SETC 'omrfree_memory_above_bar'                           000432
+&CCN_LITN SETC '@@LIT@4'                                                 000432
+&CCN_BEGIN SETC '@@BGN@4'                                                000432
+&CCN_ASCM SETC 'P'                                                       000432
+&CCN_DSASZ SETA 456                                                      000432
+&CCN_SASZ SETA 144                                                       000432
+&CCN_ARGS SETA 2                                                         000432
+&CCN_RLOW SETA 14                                                        000432
+&CCN_RHIGH SETA 5                                                        000432
+&CCN_NAB SETB  0                                                         000432
+&CCN_MAIN SETB 0                                                         000432
+&CCN_NAB_STORED SETB 0                                                   000432
+&CCN_STATIC SETB 0                                                       000432
+&CCN_ALTGPR(1) SETB 1                                                    000432
+&CCN_ALTGPR(2) SETB 1                                                    000432
+&CCN_ALTGPR(3) SETB 1                                                    000432
+&CCN_ALTGPR(4) SETB 1                                                    000432
+&CCN_ALTGPR(5) SETB 1                                                    000432
+&CCN_ALTGPR(6) SETB 1                                                    000432
+&CCN_ALTGPR(7) SETB 0                                                    000432
+&CCN_ALTGPR(8) SETB 0                                                    000432
+&CCN_ALTGPR(9) SETB 0                                                    000432
+&CCN_ALTGPR(10) SETB 0                                                   000432
+&CCN_ALTGPR(11) SETB 0                                                   000432
+&CCN_ALTGPR(12) SETB 0                                                   000432
+&CCN_ALTGPR(13) SETB 0                                                   000432
+&CCN_ALTGPR(14) SETB 1                                                   000432
+&CCN_ALTGPR(15) SETB 1                                                   000432
+&CCN_ALTGPR(16) SETB 1                                                   000432
+         MYPROLOG                                                        000432
+@@BGN@4  DS    0H                                                        000432
+         AIF   (NOT &CCN_SASIG).@@NOSIG4                                 000432
+         LLILH 5,X'C6F4'                                                 000432
+         OILL  5,X'E2C1'                                                 000432
+         ST    5,4(,13)                                                  000432
+.@@NOSIG4 ANOP                                                           000432
+         USING @@AUTO@4,13                                               000432
+         LARL  3,@@LIT@4                                                 000432
+         USING @@LIT@4,3                                                 000432
+         STG   1,448(0,13)             #SR_PARM_4                        000432
+*  void * xmemobjstart;                                                  000433
+*  int  iarv64_rc = 0;                                                   000434
+         MVHI  @91iarv64_rc@53,0                                         000434
+*                                                                        000435
+*  __asm(" IARV64 PLISTVER=MAX,MF=(L,PGETSTOR)":"DS"(wgetstor));         000436
 *                                                                        000437
-*  __asm(" IARV64 PLISTVER=MAX,MF=(L,PGETSTOR)":"DS"(wgetstor));         000438
-*                                                                        000439
-*  xmemobjstart = address;                                               000440
-         LG    14,448(0,13)            #SR_PARM_4                        000440
-         USING @@PARMD@4,14                                              000440
-         LG    14,@88address                                             000440
-         STG   14,@93xmemobjstart                                        000440
-*  wgetstor = pgetstor;                                                  000441
-         LARL  14,$STATIC                                                000441
+*  xmemobjstart = address;                                               000438
+         LG    14,448(0,13)            #SR_PARM_4                        000438
+         USING @@PARMD@4,14                                              000438
+         LG    14,@88address                                             000438
+         STG   14,@93xmemobjstart                                        000438
+*  wgetstor = pgetstor;                                                  000439
+         LARL  14,$STATIC                                                000439
+         DROP  14                                                        000439
+         USING @@STATICD@@,14                                            000439
+         MVC   @92wgetstor,@86pgetstor                                   000439
+*                                                                        000440
+*  __asm(" IARV64 REQUEST=DETACH,COND=YES,MEMOBJSTART=(%2),TTOKEN=(%3),  000441
+         LA    2,@92wgetstor                                             000441
          DROP  14                                                        000441
-         USING @@STATICD@@,14                                            000441
-         MVC   @92wgetstor,@86pgetstor                                   000441
-*                                                                        000442
-*  __asm(" IARV64 REQUEST=DETACH,COND=YES,MEMOBJSTART=(%2),TTOKEN=(%3),  000443
-         LA    2,@92wgetstor                                             000443
-         DROP  14                                                        000443
-         LA    4,@93xmemobjstart                                         000443
-         LG    14,448(0,13)            #SR_PARM_4                        000443
-         USING @@PARMD@4,14                                              000443
-         LG    5,@89ttkn@51                                              000443
-         IARV64 REQUEST=DETACH,COND=YES,MEMOBJSTART=(4),TTOKEN=(5),RETCX 000443
-               ODE=184(13),MF=(E,(2))                                    000443
-*    ::"m"(iarv64_rc),"r"(&wgetstor),"r"(&xmemobjstart),"r"(ttkn));      000444
-*  return iarv64_rc;                                                     000445
-         LGF   15,@91iarv64_rc@53                                        000445
-* }                                                                      000446
-@4L34    DS    0H                                                        000446
-         DROP                                                            000446
-         MYEPILOG                                                        000446
-OMRIARV64 CSECT ,                                                        000446
-         DS    0FD                                                       000446
+         LA    4,@93xmemobjstart                                         000441
+         LG    14,448(0,13)            #SR_PARM_4                        000441
+         USING @@PARMD@4,14                                              000441
+         LG    5,@89ttkn@51                                              000441
+         IARV64 REQUEST=DETACH,COND=YES,MEMOBJSTART=(4),TTOKEN=(5),RETCX 000441
+               ODE=184(13),MF=(E,(2))                                    000441
+*    ::"m"(iarv64_rc),"r"(&wgetstor),"r"(&xmemobjstart),"r"(ttkn));      000442
+*  return iarv64_rc;                                                     000443
+         LGF   15,@91iarv64_rc@53                                        000443
+* }                                                                      000444
+@4L34    DS    0H                                                        000444
+         DROP                                                            000444
+         MYEPILOG                                                        000444
+OMRIARV64 CSECT ,                                                        000444
+         DS    0FD                                                       000444
 @@LIT@4  LTORG                                                           000000
 @@FPB@   LOCTR                                                           000000
 @@FPB@4  DS    0FD                     Function Property Block           000000
@@ -2485,97 +2481,97 @@ OMRIARV64 LOCTR                                                          000000
 @89ttkn@51 DS  0XL8                                                      000000
          EJECT                                                           000000
 OMRIARV64 CSECT ,                                                        000000
-* int omrremove_guard(void *address, int *numMBSegments){                000461
-         ENTRY @@CCN@95                                                  000461
-@@CCN@95 AMODE 64                                                        000461
-         DC    0FD                                                       000461
-         DC    XL8'00C300C300D50100'   Function Entry Point Marker       000461
-         DC    A(@@FPB@3-*+8)          Signed offset to FPB              000461
-         DC    XL4'00000000'           Reserved                          000461
-@@CCN@95 DS    0FD                                                       000461
-&CCN_PRCN SETC '@@CCN@95'                                                000461
-&CCN_PRCN_LONG SETC 'omrremove_guard'                                    000461
-&CCN_LITN SETC '@@LIT@3'                                                 000461
-&CCN_BEGIN SETC '@@BGN@3'                                                000461
-&CCN_ASCM SETC 'P'                                                       000461
-&CCN_DSASZ SETA 464                                                      000461
-&CCN_SASZ SETA 144                                                       000461
-&CCN_ARGS SETA 2                                                         000461
-&CCN_RLOW SETA 14                                                        000461
-&CCN_RHIGH SETA 5                                                        000461
-&CCN_NAB SETB  0                                                         000461
-&CCN_MAIN SETB 0                                                         000461
-&CCN_NAB_STORED SETB 0                                                   000461
-&CCN_STATIC SETB 0                                                       000461
-&CCN_ALTGPR(1) SETB 1                                                    000461
-&CCN_ALTGPR(2) SETB 1                                                    000461
-&CCN_ALTGPR(3) SETB 1                                                    000461
-&CCN_ALTGPR(4) SETB 1                                                    000461
-&CCN_ALTGPR(5) SETB 1                                                    000461
-&CCN_ALTGPR(6) SETB 1                                                    000461
-&CCN_ALTGPR(7) SETB 0                                                    000461
-&CCN_ALTGPR(8) SETB 0                                                    000461
-&CCN_ALTGPR(9) SETB 0                                                    000461
-&CCN_ALTGPR(10) SETB 0                                                   000461
-&CCN_ALTGPR(11) SETB 0                                                   000461
-&CCN_ALTGPR(12) SETB 0                                                   000461
-&CCN_ALTGPR(13) SETB 0                                                   000461
-&CCN_ALTGPR(14) SETB 1                                                   000461
-&CCN_ALTGPR(15) SETB 1                                                   000461
-&CCN_ALTGPR(16) SETB 1                                                   000461
-         MYPROLOG                                                        000461
-@@BGN@3  DS    0H                                                        000461
-         AIF   (NOT &CCN_SASIG).@@NOSIG3                                 000461
-         LLILH 5,X'C6F4'                                                 000461
-         OILL  5,X'E2C1'                                                 000461
-         ST    5,4(,13)                                                  000461
-.@@NOSIG3 ANOP                                                           000461
-         USING @@AUTO@3,13                                               000461
-         LARL  3,@@LIT@3                                                 000461
-         USING @@LIT@3,3                                                 000461
-         STG   1,456(0,13)             #SR_PARM_3                        000461
-*  void * memObjConvertStart;                                            000462
-*  int  iarv64_rc = 0;                                                   000463
-         MVHI  @99iarv64_rc@57,0                                         000463
-*  long segments;                                                        000464
+* int omrremove_guard(void *address, int *numMBSegments){                000459
+         ENTRY @@CCN@95                                                  000459
+@@CCN@95 AMODE 64                                                        000459
+         DC    0FD                                                       000459
+         DC    XL8'00C300C300D50100'   Function Entry Point Marker       000459
+         DC    A(@@FPB@3-*+8)          Signed offset to FPB              000459
+         DC    XL4'00000000'           Reserved                          000459
+@@CCN@95 DS    0FD                                                       000459
+&CCN_PRCN SETC '@@CCN@95'                                                000459
+&CCN_PRCN_LONG SETC 'omrremove_guard'                                    000459
+&CCN_LITN SETC '@@LIT@3'                                                 000459
+&CCN_BEGIN SETC '@@BGN@3'                                                000459
+&CCN_ASCM SETC 'P'                                                       000459
+&CCN_DSASZ SETA 464                                                      000459
+&CCN_SASZ SETA 144                                                       000459
+&CCN_ARGS SETA 2                                                         000459
+&CCN_RLOW SETA 14                                                        000459
+&CCN_RHIGH SETA 5                                                        000459
+&CCN_NAB SETB  0                                                         000459
+&CCN_MAIN SETB 0                                                         000459
+&CCN_NAB_STORED SETB 0                                                   000459
+&CCN_STATIC SETB 0                                                       000459
+&CCN_ALTGPR(1) SETB 1                                                    000459
+&CCN_ALTGPR(2) SETB 1                                                    000459
+&CCN_ALTGPR(3) SETB 1                                                    000459
+&CCN_ALTGPR(4) SETB 1                                                    000459
+&CCN_ALTGPR(5) SETB 1                                                    000459
+&CCN_ALTGPR(6) SETB 1                                                    000459
+&CCN_ALTGPR(7) SETB 0                                                    000459
+&CCN_ALTGPR(8) SETB 0                                                    000459
+&CCN_ALTGPR(9) SETB 0                                                    000459
+&CCN_ALTGPR(10) SETB 0                                                   000459
+&CCN_ALTGPR(11) SETB 0                                                   000459
+&CCN_ALTGPR(12) SETB 0                                                   000459
+&CCN_ALTGPR(13) SETB 0                                                   000459
+&CCN_ALTGPR(14) SETB 1                                                   000459
+&CCN_ALTGPR(15) SETB 1                                                   000459
+&CCN_ALTGPR(16) SETB 1                                                   000459
+         MYPROLOG                                                        000459
+@@BGN@3  DS    0H                                                        000459
+         AIF   (NOT &CCN_SASIG).@@NOSIG3                                 000459
+         LLILH 5,X'C6F4'                                                 000459
+         OILL  5,X'E2C1'                                                 000459
+         ST    5,4(,13)                                                  000459
+.@@NOSIG3 ANOP                                                           000459
+         USING @@AUTO@3,13                                               000459
+         LARL  3,@@LIT@3                                                 000459
+         USING @@LIT@3,3                                                 000459
+         STG   1,456(0,13)             #SR_PARM_3                        000459
+*  void * memObjConvertStart;                                            000460
+*  int  iarv64_rc = 0;                                                   000461
+         MVHI  @99iarv64_rc@57,0                                         000461
+*  long segments;                                                        000462
+*                                                                        000463
+*  __asm(" IARV64 PLISTVER=MAX,MF=(L,FGETSTOR)":"DS"(wgetstor));         000464
 *                                                                        000465
-*  __asm(" IARV64 PLISTVER=MAX,MF=(L,FGETSTOR)":"DS"(wgetstor));         000466
-*                                                                        000467
-*  memObjConvertStart = address;                                         000468
+*  memObjConvertStart = address;                                         000466
+         LG    14,456(0,13)            #SR_PARM_3                        000466
+         USING @@PARMD@3,14                                              000466
+         LG    14,@96address@54                                          000466
+         STG   14,@101memObjConvertStart                                 000466
+*  wgetstor = fgetstor;                                                  000467
+         LARL  14,$STATIC                                                000467
+         DROP  14                                                        000467
+         USING @@STATICD@@,14                                            000467
+         MVC   @100wgetstor,@94fgetstor                                  000467
+*  segments = *numMBSegments;                                            000468
          LG    14,456(0,13)            #SR_PARM_3                        000468
+         DROP  14                                                        000468
          USING @@PARMD@3,14                                              000468
-         LG    14,@96address@54                                          000468
-         STG   14,@101memObjConvertStart                                 000468
-*  wgetstor = fgetstor;                                                  000469
-         LARL  14,$STATIC                                                000469
-         DROP  14                                                        000469
-         USING @@STATICD@@,14                                            000469
-         MVC   @100wgetstor,@94fgetstor                                  000469
-*  segments = *numMBSegments;                                            000470
-         LG    14,456(0,13)            #SR_PARM_3                        000470
-         DROP  14                                                        000470
-         USING @@PARMD@3,14                                              000470
-         LG    14,@97numMBSegments@55                                    000470
-         LGF   14,0(0,14)              (*)int                            000470
-         STG   14,@102segments@58                                        000470
-*                                                                        000471
-*  __asm(" IARV64 REQUEST=CHANGEGUARD,CONVERT=FROMGUARD,COND=YES,"\      000472
-         LA    2,@100wgetstor                                            000472
-         LA    4,@101memObjConvertStart                                  000472
-         LA    5,@102segments@58                                         000472
-         IARV64 REQUEST=CHANGEGUARD,CONVERT=FROMGUARD,COND=YES,CONVERTSX 000472
-               TART=(4),CONVERTSIZE64=(5),RETCODE=184(13),MF=(E,(2))     000472
-*    "CONVERTSTART=(%2),CONVERTSIZE64=(%3),"\                            000473
-*    "RETCODE=%0,MF=(E,(%1))"\                                           000474
-*    ::"m"(iarv64_rc),"r"(&wgetstor),"r"(&memObjConvertStart),"r"(&segm  000475
-*  return iarv64_rc;                                                     000476
-         LGF   15,@99iarv64_rc@57                                        000476
-* }                                                                      000477
-@3L35    DS    0H                                                        000477
-         DROP                                                            000477
-         MYEPILOG                                                        000477
-OMRIARV64 CSECT ,                                                        000477
-         DS    0FD                                                       000477
+         LG    14,@97numMBSegments@55                                    000468
+         LGF   14,0(0,14)              (*)int                            000468
+         STG   14,@102segments@58                                        000468
+*                                                                        000469
+*  __asm(" IARV64 REQUEST=CHANGEGUARD,CONVERT=FROMGUARD,COND=YES,"\      000470
+         LA    2,@100wgetstor                                            000470
+         LA    4,@101memObjConvertStart                                  000470
+         LA    5,@102segments@58                                         000470
+         IARV64 REQUEST=CHANGEGUARD,CONVERT=FROMGUARD,COND=YES,CONVERTSX 000470
+               TART=(4),CONVERTSIZE64=(5),RETCODE=184(13),MF=(E,(2))     000470
+*    "CONVERTSTART=(%2),CONVERTSIZE64=(%3),"\                            000471
+*    "RETCODE=%0,MF=(E,(%1))"\                                           000472
+*    ::"m"(iarv64_rc),"r"(&wgetstor),"r"(&memObjConvertStart),"r"(&segm  000473
+*  return iarv64_rc;                                                     000474
+         LGF   15,@99iarv64_rc@57                                        000474
+* }                                                                      000475
+@3L35    DS    0H                                                        000475
+         DROP                                                            000475
+         MYEPILOG                                                        000475
+OMRIARV64 CSECT ,                                                        000475
+         DS    0FD                                                       000475
 @@LIT@3  LTORG                                                           000000
 @@FPB@   LOCTR                                                           000000
 @@FPB@3  DS    0FD                     Function Property Block           000000
@@ -2617,97 +2613,97 @@ OMRIARV64 LOCTR                                                          000000
 @97numMBSegments@55 DS 0XL8                                              000000
          EJECT                                                           000000
 OMRIARV64 CSECT ,                                                        000000
-* int omradd_guard(void *address, int *numMBSegments) {                  000491
-         ENTRY @@CCN@104                                                 000491
-@@CCN@104 AMODE 64                                                       000491
-         DC    0FD                                                       000491
-         DC    XL8'00C300C300D50100'   Function Entry Point Marker       000491
-         DC    A(@@FPB@2-*+8)          Signed offset to FPB              000491
-         DC    XL4'00000000'           Reserved                          000491
-@@CCN@104 DS   0FD                                                       000491
-&CCN_PRCN SETC '@@CCN@104'                                               000491
-&CCN_PRCN_LONG SETC 'omradd_guard'                                       000491
-&CCN_LITN SETC '@@LIT@2'                                                 000491
-&CCN_BEGIN SETC '@@BGN@2'                                                000491
-&CCN_ASCM SETC 'P'                                                       000491
-&CCN_DSASZ SETA 464                                                      000491
-&CCN_SASZ SETA 144                                                       000491
-&CCN_ARGS SETA 2                                                         000491
-&CCN_RLOW SETA 14                                                        000491
-&CCN_RHIGH SETA 5                                                        000491
-&CCN_NAB SETB  0                                                         000491
-&CCN_MAIN SETB 0                                                         000491
-&CCN_NAB_STORED SETB 0                                                   000491
-&CCN_STATIC SETB 0                                                       000491
-&CCN_ALTGPR(1) SETB 1                                                    000491
-&CCN_ALTGPR(2) SETB 1                                                    000491
-&CCN_ALTGPR(3) SETB 1                                                    000491
-&CCN_ALTGPR(4) SETB 1                                                    000491
-&CCN_ALTGPR(5) SETB 1                                                    000491
-&CCN_ALTGPR(6) SETB 1                                                    000491
-&CCN_ALTGPR(7) SETB 0                                                    000491
-&CCN_ALTGPR(8) SETB 0                                                    000491
-&CCN_ALTGPR(9) SETB 0                                                    000491
-&CCN_ALTGPR(10) SETB 0                                                   000491
-&CCN_ALTGPR(11) SETB 0                                                   000491
-&CCN_ALTGPR(12) SETB 0                                                   000491
-&CCN_ALTGPR(13) SETB 0                                                   000491
-&CCN_ALTGPR(14) SETB 1                                                   000491
-&CCN_ALTGPR(15) SETB 1                                                   000491
-&CCN_ALTGPR(16) SETB 1                                                   000491
-         MYPROLOG                                                        000491
-@@BGN@2  DS    0H                                                        000491
-         AIF   (NOT &CCN_SASIG).@@NOSIG2                                 000491
-         LLILH 5,X'C6F4'                                                 000491
-         OILL  5,X'E2C1'                                                 000491
-         ST    5,4(,13)                                                  000491
-.@@NOSIG2 ANOP                                                           000491
-         USING @@AUTO@2,13                                               000491
-         LARL  3,@@LIT@2                                                 000491
-         USING @@LIT@2,3                                                 000491
-         STG   1,456(0,13)             #SR_PARM_2                        000491
-*  void * memObjConvertStart;                                            000492
-*  int  iarv64_rc = 0;                                                   000493
-         MVHI  @108iarv64_rc@63,0                                        000493
-*  long segments;                                                        000494
+* int omradd_guard(void *address, int *numMBSegments) {                  000489
+         ENTRY @@CCN@104                                                 000489
+@@CCN@104 AMODE 64                                                       000489
+         DC    0FD                                                       000489
+         DC    XL8'00C300C300D50100'   Function Entry Point Marker       000489
+         DC    A(@@FPB@2-*+8)          Signed offset to FPB              000489
+         DC    XL4'00000000'           Reserved                          000489
+@@CCN@104 DS   0FD                                                       000489
+&CCN_PRCN SETC '@@CCN@104'                                               000489
+&CCN_PRCN_LONG SETC 'omradd_guard'                                       000489
+&CCN_LITN SETC '@@LIT@2'                                                 000489
+&CCN_BEGIN SETC '@@BGN@2'                                                000489
+&CCN_ASCM SETC 'P'                                                       000489
+&CCN_DSASZ SETA 464                                                      000489
+&CCN_SASZ SETA 144                                                       000489
+&CCN_ARGS SETA 2                                                         000489
+&CCN_RLOW SETA 14                                                        000489
+&CCN_RHIGH SETA 5                                                        000489
+&CCN_NAB SETB  0                                                         000489
+&CCN_MAIN SETB 0                                                         000489
+&CCN_NAB_STORED SETB 0                                                   000489
+&CCN_STATIC SETB 0                                                       000489
+&CCN_ALTGPR(1) SETB 1                                                    000489
+&CCN_ALTGPR(2) SETB 1                                                    000489
+&CCN_ALTGPR(3) SETB 1                                                    000489
+&CCN_ALTGPR(4) SETB 1                                                    000489
+&CCN_ALTGPR(5) SETB 1                                                    000489
+&CCN_ALTGPR(6) SETB 1                                                    000489
+&CCN_ALTGPR(7) SETB 0                                                    000489
+&CCN_ALTGPR(8) SETB 0                                                    000489
+&CCN_ALTGPR(9) SETB 0                                                    000489
+&CCN_ALTGPR(10) SETB 0                                                   000489
+&CCN_ALTGPR(11) SETB 0                                                   000489
+&CCN_ALTGPR(12) SETB 0                                                   000489
+&CCN_ALTGPR(13) SETB 0                                                   000489
+&CCN_ALTGPR(14) SETB 1                                                   000489
+&CCN_ALTGPR(15) SETB 1                                                   000489
+&CCN_ALTGPR(16) SETB 1                                                   000489
+         MYPROLOG                                                        000489
+@@BGN@2  DS    0H                                                        000489
+         AIF   (NOT &CCN_SASIG).@@NOSIG2                                 000489
+         LLILH 5,X'C6F4'                                                 000489
+         OILL  5,X'E2C1'                                                 000489
+         ST    5,4(,13)                                                  000489
+.@@NOSIG2 ANOP                                                           000489
+         USING @@AUTO@2,13                                               000489
+         LARL  3,@@LIT@2                                                 000489
+         USING @@LIT@2,3                                                 000489
+         STG   1,456(0,13)             #SR_PARM_2                        000489
+*  void * memObjConvertStart;                                            000490
+*  int  iarv64_rc = 0;                                                   000491
+         MVHI  @108iarv64_rc@63,0                                        000491
+*  long segments;                                                        000492
+*                                                                        000493
+*  __asm(" IARV64 PLISTVER=MAX,MF=(L,DGETSTOR)":"DS"(wgetstor));         000494
 *                                                                        000495
-*  __asm(" IARV64 PLISTVER=MAX,MF=(L,DGETSTOR)":"DS"(wgetstor));         000496
-*                                                                        000497
-*  memObjConvertStart = address;                                         000498
+*  memObjConvertStart = address;                                         000496
+         LG    14,456(0,13)            #SR_PARM_2                        000496
+         USING @@PARMD@2,14                                              000496
+         LG    14,@105address@59                                         000496
+         STG   14,@110memObjConvertStart@62                              000496
+*  wgetstor = dgetstor;                                                  000497
+         LARL  14,$STATIC                                                000497
+         DROP  14                                                        000497
+         USING @@STATICD@@,14                                            000497
+         MVC   @109wgetstor,@103dgetstor                                 000497
+*  segments = *numMBSegments;                                            000498
          LG    14,456(0,13)            #SR_PARM_2                        000498
+         DROP  14                                                        000498
          USING @@PARMD@2,14                                              000498
-         LG    14,@105address@59                                         000498
-         STG   14,@110memObjConvertStart@62                              000498
-*  wgetstor = dgetstor;                                                  000499
-         LARL  14,$STATIC                                                000499
-         DROP  14                                                        000499
-         USING @@STATICD@@,14                                            000499
-         MVC   @109wgetstor,@103dgetstor                                 000499
-*  segments = *numMBSegments;                                            000500
-         LG    14,456(0,13)            #SR_PARM_2                        000500
-         DROP  14                                                        000500
-         USING @@PARMD@2,14                                              000500
-         LG    14,@106numMBSegments@60                                   000500
-         LGF   14,0(0,14)              (*)int                            000500
-         STG   14,@111segments@64                                        000500
-*                                                                        000501
-*  __asm(" IARV64 REQUEST=CHANGEGUARD,CONVERT=TOGUARD,COND=YES,"\        000502
-         LA    2,@109wgetstor                                            000502
-         LA    4,@110memObjConvertStart@62                               000502
-         LA    5,@111segments@64                                         000502
-         IARV64 REQUEST=CHANGEGUARD,CONVERT=TOGUARD,COND=YES,CONVERTSTAX 000502
-               RT=(4),CONVERTSIZE64=(5),RETCODE=184(13),MF=(E,(2))       000502
-*    "CONVERTSTART=(%2),CONVERTSIZE64=(%3),"\                            000503
-*    "RETCODE=%0,MF=(E,(%1))"\                                           000504
-*    ::"m"(iarv64_rc),"r"(&wgetstor),"r"(&memObjConvertStart),"r"(&segm  000505
-*  return iarv64_rc;                                                     000506
-         LGF   15,@108iarv64_rc@63                                       000506
-* }                                                                      000507
-@2L36    DS    0H                                                        000507
-         DROP                                                            000507
-         MYEPILOG                                                        000507
-OMRIARV64 CSECT ,                                                        000507
-         DS    0FD                                                       000507
+         LG    14,@106numMBSegments@60                                   000498
+         LGF   14,0(0,14)              (*)int                            000498
+         STG   14,@111segments@64                                        000498
+*                                                                        000499
+*  __asm(" IARV64 REQUEST=CHANGEGUARD,CONVERT=TOGUARD,COND=YES,"\        000500
+         LA    2,@109wgetstor                                            000500
+         LA    4,@110memObjConvertStart@62                               000500
+         LA    5,@111segments@64                                         000500
+         IARV64 REQUEST=CHANGEGUARD,CONVERT=TOGUARD,COND=YES,CONVERTSTAX 000500
+               RT=(4),CONVERTSIZE64=(5),RETCODE=184(13),MF=(E,(2))       000500
+*    "CONVERTSTART=(%2),CONVERTSIZE64=(%3),"\                            000501
+*    "RETCODE=%0,MF=(E,(%1))"\                                           000502
+*    ::"m"(iarv64_rc),"r"(&wgetstor),"r"(&memObjConvertStart),"r"(&segm  000503
+*  return iarv64_rc;                                                     000504
+         LGF   15,@108iarv64_rc@63                                       000504
+* }                                                                      000505
+@2L36    DS    0H                                                        000505
+         DROP                                                            000505
+         MYEPILOG                                                        000505
+OMRIARV64 CSECT ,                                                        000505
+         DS    0FD                                                       000505
 @@LIT@2  LTORG                                                           000000
 @@FPB@   LOCTR                                                           000000
 @@FPB@2  DS    0FD                     Function Property Block           000000
@@ -2747,7 +2743,7 @@ OMRIARV64 LOCTR                                                          000000
          ORG   @@PARMD@2+8                                               000000
          DS    0FD                                                       000000
 @106numMBSegments@60 DS 0XL8                                             000000
-*                                                                        000546
+*                                                                        000544
          EJECT                                                           000000
 OMRIARV64 CSECT ,                                                        000000
 @@CONST@AREA@@ DS 0D                                                     000000
@@ -2934,7 +2930,7 @@ $STATIC  DS    0D                                                        000000
          ORG   @@STATICD@@+1024                                          000000
 @46mgetstor DS XL256                                                     000000
          ORG   @@STATICD@@+1280                                          000000
-@57Tgetstor DS XL256                                                     000000
+@57tgetstor DS XL256                                                     000000
          ORG   @@STATICD@@+1536                                          000000
 @68rgetstor DS XL256                                                     000000
          ORG   @@STATICD@@+1792                                          000000
@@ -2947,4 +2943,4 @@ $STATIC  DS    0D                                                        000000
 @103dgetstor DS XL256                                                    000000
          ORG   @@STATICD@@+2816                                          000000
 @112qgetstor DS XL256                                                    000000
-         END   ,(5650ZOS   ,2400,26037)                                  000000
+         END   ,(5650ZOS   ,2400,26156)                                  000000
