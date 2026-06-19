@@ -865,6 +865,12 @@ bool OMR::Z::CodeGenerator::mulDecompositionCostIsJustified(int32_t numOfOperati
     OMR::Logger *log = comp->log();
     bool trace = comp->getOptions()->trace(OMR::treeSimplification);
 
+    static bool decomp = feGetEnv("TR_DisableDecomp") != NULL;
+    if (decomp) {
+        log->prints("MulDecomp is disabled by TR_DisableDecomp\n");
+        return false;
+    }
+
     if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196)) {
         int32_t numCycles = 0;
         numCycles = numOfOperations + 1;
