@@ -613,7 +613,7 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 	uintptr_t userExtendedPrivateAreaMemoryType = ZOS64_VMEM_ABOVE_BAR_GENERAL;
 	uintptr_t userExtendedPrivateAreaMemoryMax = 0;
 
-	if (OMR_ARE_ANY_BITS_SET(mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED) || (OMRPORT_VMEM_ZOS_USE2TO32G_AREA == (OMRPORT_VMEM_ZOS_USE2TO32G_AREA & options))) {
+	if (OMRPORT_VMEM_ZOS_USE2TO32G_AREA == (OMRPORT_VMEM_ZOS_USE2TO32G_AREA & options)) {
 		userExtendedPrivateAreaMemoryType = PPG_userExtendedPrivateAreaMemoryType;
 		/*
 		 * Requesting more memory as supported would cause ZOS System failure
