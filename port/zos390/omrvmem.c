@@ -658,24 +658,34 @@ reservePagesAboveBar(struct OMRPortLibrary *portLibrary, J9PortVmemIdentifier *i
 		goto _end;
 	}
 
-	if ((FOUR_K == pageSize) && (ZOS64_VMEM_ABOVE_BAR_GENERAL != userExtendedPrivateAreaMemoryType)) {
+	if ((FOUR_K == pageSize)) {
 		const char *const ttkn = PPG_ipt_ttoken;
 
 		printf("\t-- In reservePagesAboveBar: call omrallocate_4K_pages_guarded_in_userExtendedPrivateArea %p bytes | %ld numSegments\n", (void *)byteAmount, numSegments);
 
 		Trc_PRT_vmem_reservePagesAboveBar_allocate_4K_pages_in_2to32G_area(numSegments);
 		allocator = OMRPORT_VMEM_RESERVE_USED_J9ALLOCATE_4K_PAGES_IN_2TO32G_AREA;
-		if (OMR_ARE_ANY_BITS_SET(mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
-			ptr = (void*)0xdeadbeef; /* initialize ptr to non-NULL value to distinguish failure of allocation from failure of guard page addition */
-			printf("\t OMRPORT_VMEM_MEMORY_MODE_GUARDED bit is set\n");
-			printf("\t ptr before reserve memory request %p\n", ptr);
-			ptr = omrallocate_4K_pages_guarded_in_userExtendedPrivateArea(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
-			printf("\t omrallocate_4K_pages_guarded_in_userExtendedPrivateArea(%ld) returned %p\n", numSegments, ptr);
+		ptr = (void*)0xdeadbeef; /* initialize ptr to non-NULL value to distinguish failure of allocation from failure of guard page addition */
+		printf("\t ptr before reserve memory request %p\n", ptr);
+
+		if ((ZOS64_VMEM_ABOVE_BAR_GENERAL != userExtendedPrivateAreaMemoryType)) {
+			if (OMR_ARE_ANY_BITS_SET(mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
+				printf("\t in_userExtendedPrivateArea OMRPORT_VMEM_MEMORY_MODE_GUARDED bit is set\n");
+				ptr = omrallocate_4K_pages_guarded_in_userExtendedPrivateArea(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
+			} else {
+				printf("\t in_userExtendedPrivateArea OMRPORT_VMEM_MEMORY_MODE_GUARDED bit is not set\n");
+				ptr = omrallocate_4K_pages_in_userExtendedPrivateArea(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
+			}
 		} else {
-			printf("\t OMRPORT_VMEM_MEMORY_MODE_GUARDED bit is not set\n");
-			ptr = omrallocate_4K_pages_in_userExtendedPrivateArea(numSegments, userExtendedPrivateAreaMemoryType, ttkn);
-			printf("\t omrallocate_4K_pages_in_userExtendedPrivateArea(%ld) returned %p\n", numSegments, ptr);
+			if (OMR_ARE_ANY_BITS_SET(mode, OMRPORT_VMEM_MEMORY_MODE_GUARDED)) {
+				printf("\t OMRPORT_VMEM_MEMORY_MODE_GUARDED bit is set\n");
+				ptr = omrallocate_4K_pages_guarded_above_bar(numSegments, ttkn);
+			} else {
+				printf("\t OMRPORT_VMEM_MEMORY_MODE_GUARDED bit is not set\n");
+				ptr = omrallocate_4K_pages_above_bar(numSegments, ttkn);
+			}
 		}
+		printf("\t omrallocate_4K_pages segments(%ld) returned %p\n", numSegments, ptr);
 
 		LP_DEBUG_PRINTF2("\t omrallocate_4K_pages_in_userExtendedPrivateArea(0x%zx) returned 0x%zx\n", \
 						 numSegments, ptr);
