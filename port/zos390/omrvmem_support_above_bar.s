@@ -635,7 +635,7 @@ OMRIARV64 RMODE ANY                                                      000000
 *  wgetstor = egetstor;                                                  000420
 *                                                                        000421
 *  __asm(" IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,"\                   000422
-*    "GUARDSIZE=(%2),"\                                                  000423
+*    "GUARDSIZE64=(%2),"\                                                000423
 *    "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\                                 000424
 *    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\     000425
 *    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(tt  000426
@@ -766,8 +766,8 @@ OMRIARV64 RMODE ANY                                                      000000
 * int omrdiscard_data(void *address, int *numFrames) {                   000551
          J     @@CCN@113                                                 000551
 @@PFD@@  DC    XL8'00C300C300D50000'   Prefix Data Marker                000551
-         DC    CL8'20260629'           Compiled Date YYYYMMDD            000551
-         DC    CL6'115622'             Compiled Time HHMMSS              000551
+         DC    CL8'20260717'           Compiled Date YYYYMMDD            000551
+         DC    CL6'074637'             Compiled Time HHMMSS              000551
          DC    XL4'42040000'           Compiler Version                  000551
          DC    XL2'0000'               Reserved                          000551
          DC    BL1'00000000'           Flag Set 1                        000551
@@ -2337,10 +2337,10 @@ OMRIARV64 CSECT ,                                                        000000
          LG    14,456(0,13)            #SR_PARM_5                        000422
          USING @@PARMD@5,14                                              000422
          LG    6,@80ttkn@46                                              000422
-         IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,GUARDSIZE=(4),CONTROLX 000422
-               =UNAUTH,PAGEFRAMESIZE=4K,SEGMENTS=(4),ORIGIN=(2),TTOKEN=X 000422
-               (6),RETCODE=192(13),MF=(E,(5))                            000422
-*    "GUARDSIZE=(%2),"\                                                  000423
+         IARV64 REQUEST=GETSTOR,COND=YES,SADMP=NO,GUARDSIZE64=(4),CONTRX 000422
+               OL=UNAUTH,PAGEFRAMESIZE=4K,SEGMENTS=(4),ORIGIN=(2),TTOKEX 000422
+               N=(6),RETCODE=192(13),MF=(E,(5))                          000422
+*    "GUARDSIZE64=(%2),"\                                                000423
 *    "CONTROL=UNAUTH,PAGEFRAMESIZE=4K,"\                                 000424
 *    "SEGMENTS=(%2),ORIGIN=(%1),TTOKEN=(%4),RETCODE=%0,MF=(E,(%3))"\     000425
 *    ::"m"(iarv64_rc),"r"(&origin),"r"(&segments),"r"(&wgetstor),"r"(tt  000426
@@ -2993,4 +2993,4 @@ $STATIC  DS    0D                                                        000000
 @103dgetstor DS XL256                                                    000000
          ORG   @@STATICD@@+2816                                          000000
 @112qgetstor DS XL256                                                    000000
-         END   ,(5650ZOS   ,2400,26180)                                  000000
+         END   ,(5650ZOS   ,2400,26198)                                  000000
