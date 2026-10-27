@@ -1943,6 +1943,8 @@ TR::OptionTable OMR::Options::_jitOptions[] = {
      constRefPrivatization, 0, "P" },
     { "traceConstRefRematerialization", "L\ttrace const ref rematerialization", TR::Options::traceOptimization,
      constRefRematerialization, 0, "P" },
+    { "traceDataAccessAccelerator", "L\ttrace data access accelerator", TR::Options::traceOptimization,
+     dataAccessAccelerator, 0, "P" },
     { "traceDeadTreeElimination", "L\ttrace dead tree elimination", TR::Options::traceOptimization,
      deadTreesElimination, 0, "P" },
     { "traceDominators", "L\ttrace dominators and post-dominators", SET_OPTION_BIT(TR_TraceDominators), "P" },
