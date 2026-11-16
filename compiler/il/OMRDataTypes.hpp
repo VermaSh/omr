@@ -120,6 +120,7 @@ typedef int32_t CASECONST_TYPE;
     63 // NOTE: update J9::DataType::getMaxPackedDecimalPrecision() when changing this constant
 
 #define TR_VECTOR_REGISTER_SIZE 16
+#define TR_MIN_INPUT_PACKED_DECIMAL_PRECISION 1
 #define TR_MAX_INPUT_PACKED_DECIMAL_PRECISION 31
 
 #define TR_FIRST_VALID_SIGN_CODE 0x0a
