@@ -1611,7 +1611,9 @@ TR::Node *OMR::Node::duplicateTree_DEPRECATED(bool duplicateChildren)
     }
 #endif
 
-    printFullSubtree();
+    if (comp->log()) {
+        printFullSubtree();
+    }
     for (int32_t i = 0; i < self()->getNumChildren(); i++) {
         TR::Node *child = self()->getChild(i);
         if (child) {
